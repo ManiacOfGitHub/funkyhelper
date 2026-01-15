@@ -1,11 +1,11 @@
-const { Client, Events, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const { Client, Events, GatewayIntentBits, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const config = require('./config.json');
 const fs = require('fs');
 const path = require('path');
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent] });
 const commandsDir = path.join(__dirname, 'commands');
 
 client.on("messageCreate", async (message) => {
@@ -117,9 +117,28 @@ client.on("messageCreate", async (message) => {
 });
 
 client.on("messageDelete", async (message) => {
+	if(message.author.bot) return;
 	if(message.attachments.size > 0) {
 		var logChannel = await client.channels.fetch("1461160220880408778");
-		await logChannel.send(`A message with ${message.attachments.size} attachments was just deleted.`);
+		var messageText = `<@&${config.activeModeratorsId}> A message from ${message.author} has been deleted in ${message.channel} with ${message.attachments.size} attachment${message.attachments.size>1?"s":""}.`;
+		let files = [];
+		if(message.attachments && message.attachments.values) {
+			for(var attachment of message.attachments.values()) {
+				if(!attachment.url) continue;
+				if(attachment.size <= 10 * (10**6)) {
+					try {
+						let file = await fetch(attachment.url);
+						let fileData = Buffer.from(await file.arrayBuffer());
+						files.push(new AttachmentBuilder(fileData,{name:attachment.name}));
+						continue;
+					} catch(err) {}
+				}
+				messageText += "\n" + attachment.url + " (This file could not be permanently downloaded. This link may stop functioning at some point.)";
+			}
+		} else {
+			messageText += "\nCould not save the attachments."
+		}
+		await logChannel.send({content:messageText,flags:[4096],files});
 	}
 });
 
