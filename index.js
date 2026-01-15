@@ -181,7 +181,7 @@ client.on("messageDelete", async (message) => {
 	if (message.author.bot) return;
 	if (message.attachments.size > 0) {
 		var logChannel = await client.channels.fetch("1461160220880408778");
-		var messageText = `<@&${config.activeModeratorsId}> A message from ${message.author} has been deleted in ${message.channel} with ${message.attachments.size} attachment${message.attachments.size > 1 ? "s" : ""}.`;
+		var messageText = `A message from ${message.author} has been deleted in ${message.channel} with ${message.attachments.size} attachment${message.attachments.size > 1 ? "s" : ""}.`;
 		let files = [];
 		if (message.attachments && message.attachments.values) {
 			for (var attachment of message.attachments.values()) {
@@ -194,7 +194,7 @@ client.on("messageDelete", async (message) => {
 						continue;
 					} catch (err) { }
 				}
-				messageText += "\n" + attachment.url + " (This file could not be permanently downloaded. This link may stop functioning at some point.)";
+				messageText += `\n<@&${config.activeModeratorsId}> ` + attachment.url + " (This file could not be permanently downloaded. This link may stop functioning at some point.)";
 			}
 		} else {
 			messageText += "\nCould not save the attachments."
