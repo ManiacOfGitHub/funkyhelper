@@ -71,7 +71,10 @@ client.on("messageCreate", async (message) => {
             }
                 if (err) return;
                 try {
-                    let data = JSON.parse(commandContent);
+					if(!(commandContent.startsWith("`") && commandContent.endsWith("`"))) {
+						throw Error();
+					}					
+                    let data = JSON.parse(commandContent.slice(1,-1));
                     let embed = new EmbedBuilder();
                     if (data.author) embed.setAuthor({ name: data.author });
                     if (data.title) embed.setTitle(data.title);
@@ -113,6 +116,13 @@ client.on("messageCreate", async (message) => {
 	}
 });
 
+client.on("messageDelete", async (message) => {
+	if(message.attachments.size > 0) {
+		var logChannel = await client.channels.fetch("1461160220880408778");
+		await logChannel.send(`A message with ${message.attachments.size} attachments was just deleted.`);
+	}
+});
+
 client.once(Events.ClientReady, () => {
 	console.log('Ready! Logged in as ' + client.user.tag);
     const commandsDir = path.join(__dirname, 'commands');
@@ -124,7 +134,6 @@ client.once(Events.ClientReady, () => {
 client.login(config.token);
 
 function havePermission(member) {
-	console.log(member.roles.cache)
 	return member.roles.cache.some(role => ["Active Moderators", "Helper"].includes(role.name));
 }
 
