@@ -17,13 +17,13 @@ client.on("messageCreate", async (message) => {
 
 	if (message.content.split(" ")[0] === ".create") {
         let commandName = args[1];
-		if (!message.member.roles.cache.some(role => role.name === "Staff")) {
+		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to create commands.");
 		}
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", "."].includes(commandName) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test"].includes(commandName) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
         const filePath = path.join(commandsDir, `${commandName}.botcmd`);
@@ -39,7 +39,7 @@ client.on("messageCreate", async (message) => {
 
 	if (message.content.split(" ")[0] === ".delete") {
         let commandName = args[1];
-		if (!message.member.roles.cache.some(role => role.name === "Staff")) {
+		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to delete commands.");
 		}
 		if (args.length < 2) {
@@ -122,6 +122,11 @@ client.once(Events.ClientReady, () => {
 });
 
 client.login(config.token);
+
+function havePermission(member) {
+	console.log(member.roles.cache)
+	return member.roles.cache.some(role => ["Active Moderators", "Helper"].includes(role.name));
+}
 
 async function generateWikiPage(wikiCommand) {
 	if (!wikiCommand.length) return;
