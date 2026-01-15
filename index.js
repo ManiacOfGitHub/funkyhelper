@@ -12,24 +12,25 @@ client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
 
 	let args = message.content.split(" ");
-    let commandName = args[0] ? args[0].slice(1) : "";
+	let commandName = args[0] ? args[0].slice(1) : "";
 	await processWikiCommands(message);
 
 	if (message.content.split(" ")[0] === ".create") {
-        let commandName = args[1];
+		let commandName = args[1];
 		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to create commands.");
 		}
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test"].includes(commandName) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
-        const filePath = path.join(commandsDir, `${commandName}.botcmd`);
-        if (!filePath.startsWith(commandsDir)) {
-            return message.reply("Invalid command path.");
-        }
+		commandName = commandName.toLowerCase();
+		const filePath = path.join(commandsDir, `${commandName}.botcmd`);
+		if (!filePath.startsWith(commandsDir)) {
+			return message.reply("Invalid command path.");
+		}
 		const commandContent = args.slice(2).join(" ");
 		fs.writeFile(`./commands/${commandName}.botcmd`, commandContent, (err) => {
 			if (err) return message.reply("Error saving command.");
@@ -38,18 +39,18 @@ client.on("messageCreate", async (message) => {
 	}
 
 	if (message.content.split(" ")[0] === ".delete") {
-        let commandName = args[1];
+		let commandName = args[1];
 		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to delete commands.");
 		}
 		if (args.length < 2) {
 			return message.reply("Not enough arguments. Usage: `.delete <command name>`");
 		}
-        commandName = path.basename(commandName);
-        const filePath = path.join(commandsDir, `${commandName}.botcmd`);
-        if (!filePath.startsWith(commandsDir)) {
-            return message.reply("Invalid command path.");
-        }
+		commandName = path.basename(commandName).toLowerCase();
+		const filePath = path.join(commandsDir, `${commandName}.botcmd`);
+		if (!filePath.startsWith(commandsDir)) {
+			return message.reply("Invalid command path.");
+		}
 		fs.unlink(`./commands/${commandName}.botcmd`, (err) => {
 			if (err) return message.reply(`Command ${commandName} does not exist.`);
 			message.reply(`Command \`.${commandName}\` deleted!`);
@@ -64,50 +65,52 @@ client.on("messageCreate", async (message) => {
 		});
 	}
 
+	commandName = commandName.toLowerCase();
 	if (message.content.startsWith(".") && fs.existsSync(`./commands/${commandName}.botcmd`)) {
 		fs.readFile(`./commands/${commandName}.botcmd`, 'utf8', async (err, commandContent) => {
-            if (commandContent === "" || commandContent === null) {
-                return message.reply("Command content is empty.");
-            }
-                if (err) return;
-                try {
-					if(!(commandContent.startsWith("`") && commandContent.endsWith("`"))) {
-						throw Error();
-					}					
-                    let data = JSON.parse(commandContent.slice(1,-1));
-                    let embed = new EmbedBuilder();
-                    if (data.author) embed.setAuthor({ name: data.author });
-                    if (data.title) embed.setTitle(data.title);
-                    if (data.color) {
-                        var consoleColors = {
-                            "3DS": 0xCE181E,
-                            "WiiU": 0x009AC7,
-                            "Switch": 0xE60012,
-                            "Wii": 0x009AC7
-                        }
-                        if (data.color in consoleColors) {
-                            embed.setColor(consoleColors[data.color]);
-                        } else {
-                            embed.setColor(parseInt(data.color,16));
-                        }};
-                    if (data.image) embed.setImage(data.image);
-                    if (data.description) embed.setDescription(data.description);
-                    if (data.footer) embed.setFooter({ text: data.footer });
-                    if (data.url) embed.setURL(data.url);
+			if (commandContent === "" || commandContent === null) {
+				return message.reply("Command content is empty.");
+			}
+			if (err) return;
+			try {
+				if (!(commandContent.startsWith("`") && commandContent.endsWith("`"))) {
+					throw Error();
+				}
+				let data = JSON.parse(commandContent.slice(1, -1));
+				let embed = new EmbedBuilder();
+				if (data.author) embed.setAuthor({ name: data.author });
+				if (data.title) embed.setTitle(data.title);
+				if (data.color) {
+					var consoleColors = {
+						"3DS": 0xCE181E,
+						"WiiU": 0x009AC7,
+						"Switch": 0xE60012,
+						"Wii": 0x009AC7
+					}
+					if (data.color in consoleColors) {
+						embed.setColor(consoleColors[data.color]);
+					} else {
+						embed.setColor(parseInt(data.color, 16));
+					}
+				};
+				if (data.image) embed.setImage(data.image);
+				if (data.description) embed.setDescription(data.description);
+				if (data.footer) embed.setFooter({ text: data.footer });
+				if (data.url) embed.setURL(data.url);
 
-                    if (message.reference) {
-                        (await message.fetchReference()).reply({ embeds: [embed] });
-                    } else {
-                        message.channel.send({ embeds: [embed] });
-                    }
-                } catch {
-                    if (message.reference) {
-                        (await message.fetchReference()).reply(commandContent);
-                    } else {
-                        message.channel.send(commandContent);
-                    }
-                }
-            });
+				if (message.reference) {
+					(await message.fetchReference()).reply({ embeds: [embed] });
+				} else {
+					message.channel.send({ embeds: [embed] });
+				}
+			} catch {
+				if (message.reference) {
+					(await message.fetchReference()).reply(commandContent);
+				} else {
+					message.channel.send(commandContent);
+				}
+			}
+		});
 	}
 
 	if (message.content === ".test") {
@@ -117,37 +120,37 @@ client.on("messageCreate", async (message) => {
 });
 
 client.on("messageDelete", async (message) => {
-	if(message.author.bot) return;
-	if(message.attachments.size > 0) {
+	if (message.author.bot) return;
+	if (message.attachments.size > 0) {
 		var logChannel = await client.channels.fetch("1461160220880408778");
-		var messageText = `<@&${config.activeModeratorsId}> A message from ${message.author} has been deleted in ${message.channel} with ${message.attachments.size} attachment${message.attachments.size>1?"s":""}.`;
+		var messageText = `<@&${config.activeModeratorsId}> A message from ${message.author} has been deleted in ${message.channel} with ${message.attachments.size} attachment${message.attachments.size > 1 ? "s" : ""}.`;
 		let files = [];
-		if(message.attachments && message.attachments.values) {
-			for(var attachment of message.attachments.values()) {
-				if(!attachment.url) continue;
-				if(attachment.size <= 10 * (10**6)) {
+		if (message.attachments && message.attachments.values) {
+			for (var attachment of message.attachments.values()) {
+				if (!attachment.url) continue;
+				if (attachment.size <= 10 * (10 ** 6)) {
 					try {
 						let file = await fetch(attachment.url);
 						let fileData = Buffer.from(await file.arrayBuffer());
-						files.push(new AttachmentBuilder(fileData,{name:attachment.name}));
+						files.push(new AttachmentBuilder(fileData, { name: attachment.name }));
 						continue;
-					} catch(err) {}
+					} catch (err) { }
 				}
 				messageText += "\n" + attachment.url + " (This file could not be permanently downloaded. This link may stop functioning at some point.)";
 			}
 		} else {
 			messageText += "\nCould not save the attachments."
 		}
-		await logChannel.send({content:messageText,flags:[4096],files});
+		await logChannel.send({ content: messageText, flags: [4096], files });
 	}
 });
 
 client.once(Events.ClientReady, () => {
 	console.log('Ready! Logged in as ' + client.user.tag);
-    const commandsDir = path.join(__dirname, 'commands');
-    if (!fs.existsSync(commandsDir)) {
-        fs.mkdirSync(commandsDir, { recursive: true });
-    }
+	const commandsDir = path.join(__dirname, 'commands');
+	if (!fs.existsSync(commandsDir)) {
+		fs.mkdirSync(commandsDir, { recursive: true });
+	}
 });
 
 client.login(config.token);
