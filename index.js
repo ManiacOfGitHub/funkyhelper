@@ -1,7 +1,8 @@
-const { Client, Events, GatewayIntentBits, EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { Client, Events, GatewayIntentBits, EmbedBuilder, AttachmentBuilder, ActivityType } = require('discord.js');
 const config = require('./config.json');
 const fs = require('fs');
 const path = require('path');
+const { log } = require('console');
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
@@ -266,8 +267,26 @@ client.on("messageDelete", async (message) => {
 	}
 });
 
-client.once(Events.ClientReady, () => {
+client.once(Events.ClientReady, async() => {
 	console.log('Ready! Logged in as ' + client.user.tag);
+	client.user.setPresence({
+		activities: [{
+			name: "Stay Funky and Happy Modding!",
+			type: ActivityType.Playing
+		}],
+		status: "online"
+	});
+
+	try {
+		var logChannel = await client.channels.fetch(config.logChannelId);
+		let embed = new EmbedBuilder();
+		embed.setTitle("FunkyHelper is online!");
+		embed.setDescription("The bot has just started. If this happens several times within a few minutes, the bot may be crashing. Please notify a Bot Maintainer if so.");
+		embed.setColor("Aqua");
+		await logChannel.send(embed);
+	} catch(err) {
+		console.log("Failed to send startup message.");
+	}
 	const commandsDir = path.join(__dirname, 'commands');
 	if (!fs.existsSync(commandsDir)) {
 		fs.mkdirSync(commandsDir, { recursive: true });
@@ -275,6 +294,10 @@ client.once(Events.ClientReady, () => {
 	const keywordsDir = path.join(__dirname, 'keywords');
 	if (!fs.existsSync(keywordsDir)) {
 		fs.mkdirSync(keywordsDir, { recursive: true });
+	}
+	const aliasDir = path.join(__dirname, 'alias');
+	if (!fs.existsSync(aliasDir)) {
+		fs.mkdirSync(aliasDir, { recursive: true });
 	}
 });
 
