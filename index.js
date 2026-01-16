@@ -8,6 +8,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent] });
 const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
+const aliasDir = path.join(__dirname, "alias");
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
@@ -15,6 +16,60 @@ client.on("messageCreate", async (message) => {
 	let args = message.content.split(" ");
 	let commandName = args[0] ? args[0].slice(1) : "";
 	await processWikiCommands(message);
+
+	// Alias create command
+	if (message.content.split(" ")[0] === ".alias") {
+		if (!havePermission(message.member)) {
+			return message.reply("You do not have permission to create aliases.");
+		}
+		if (args.length < 3) {
+			return message.reply("Not enough arguments. Usage: `.alias <ogcommand> <alias>`");
+		}
+		let aliasName = args[2].toLowerCase();
+		if (aliasName === "" || aliasName.startsWith(".")) {
+			return message.reply("You can't create a alias with that name.");
+		}
+		const filePath = path.join(aliasDir, `${aliasName}.alias`);
+		if (!filePath.startsWith(aliasDir)) {
+			return message.reply("Invalid alias path.");
+		}
+		const ogCommand = args[1].toLowerCase();
+		fs.writeFile(filePath, ogCommand, (err) => {
+			if (err) return message.reply("Error saving alias.");
+			message.reply(`Alias \`${aliasName}\` for \`${ogCommand}\` created!`);
+		});
+		return;
+	}
+
+	// Alias delete command
+	if (message.content.split(" ")[0] === ".deletealias") {
+		if (!havePermission(message.member)) {
+			return message.reply("You do not have permission to delete aliases.");
+		}
+		if (args.length < 2) {
+			return message.reply("Not enough arguments. Usage: `.deletealias <alias>`");
+		}
+		let aliasName = path.basename(args[1]).toLowerCase();
+		const filePath = path.join(aliasDir, `${aliasName}.alias`);
+		if (!filePath.startsWith(aliasDir)) {
+			return message.reply("Invalid alias path.");
+		}
+		fs.unlink(filePath, (err) => {
+			if (err) return message.reply(`Alias \`${aliasName}\` does not exist.`);
+			message.reply(`Alias \`${aliasName}\` deleted!`);
+		});
+		return;
+	}
+
+	// Alias help command
+	if (message.content.split(" ")[0] === ".helpalias") {
+		fs.readdir('./alias', (err, files) => {
+			if (err) return message.reply("Error reading aliases.");
+			const aliasList = files.filter(file => file.endsWith('.alias')).map(file => file.replace('.alias', '')).sort();
+			message.reply("Aliases: " + (aliasList.length ? aliasList.join(", ") : "None"));
+		});
+		return;
+	}
 
 	if (message.content.split(" ")[0] === ".create") {
 		let commandName = args[1];
@@ -67,6 +122,14 @@ client.on("messageCreate", async (message) => {
 	}
 
 	commandName = commandName.toLowerCase();
+	if (message.content.startsWith(".") && fs.existsSync(`./alias/${commandName}.alias`)) {
+		try {
+			commandName = fs.readFileSync(`./alias/${commandName}.alias`, 'utf8');
+		} catch(err) {
+			console.log(`Could not fetch alias ${commandName}`);
+		}
+	}
+	console.log(commandName);
 	if (message.content.startsWith(".") && fs.existsSync(`./commands/${commandName}.botcmd`)) {
 		fs.readFile(`./commands/${commandName}.botcmd`, 'utf8', async (err, commandContent) => {
 			if (commandContent === "" || commandContent === null) {
@@ -172,6 +235,7 @@ client.on("messageCreate", async (message) => {
 		});
 		return;
 	}
+	
 
 	// Check for keyword matches in the message
 	await processKeywords(message);
@@ -218,7 +282,7 @@ client.once(Events.ClientReady, () => {
 client.login(config.token);
 
 function havePermission(member) {
-	return member.roles.cache.some(role => ["Active Moderators", "Helper"].includes(role.name));
+	return member.roles.cache.some(role => config.allowRoleList.includes(role.id));
 }
 
 async function generateWikiPage(wikiCommand) {
@@ -226,7 +290,7 @@ async function generateWikiPage(wikiCommand) {
 	wikiCommand = wikiCommand[0].toUpperCase() + wikiCommand.slice(1).replace(/ /g, "_");
 	let response = await fetch(`https://wiki.hacks.guide/w/api.php?action=query&meta=siteinfo&siprop=general&iwurl=true&titles=${encodeURIComponent(wikiCommand.split("#")[0])}&format=json`).then(res => res.json());
 	if (response.query?.interwiki?.[0]?.url) return `<${response.query.interwiki[0].url}>`;
-	if (response.query?.normalized?.[0]?.to) wikiCommand = response.query.normalized[0].to;
+	if (response.query?.normalized?.[0]?.to) wikiCommand = response.query.normalized[0].to.replace(/ /g, "_");;
 	return `<https://wiki.hacks.guide/wiki/${wikiCommand}>`;
 }
 
