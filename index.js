@@ -283,7 +283,7 @@ client.once(Events.ClientReady, async() => {
 		embed.setTitle("FunkyHelper is online!");
 		embed.setDescription("The bot has just started. If this happens several times within a few minutes, the bot may be crashing. Please notify a Bot Maintainer if so.");
 		embed.setColor("Aqua");
-		await logChannel.send(embed);
+		await logChannel.send({embeds:[embed]});
 	} catch(err) {
 		console.log("Failed to send startup message.");
 	}
