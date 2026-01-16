@@ -243,7 +243,7 @@ client.on("messageCreate", async (message) => {
 client.on("messageDelete", async (message) => {
 	if (message.author.bot) return;
 	if (message.attachments.size > 0) {
-		var logChannel = await client.channels.fetch("1461160220880408778");
+		var logChannel = await client.channels.fetch(config.logChannelId);
 		var messageText = `A message from ${message.author} has been deleted in ${message.channel} with ${message.attachments.size} attachment${message.attachments.size > 1 ? "s" : ""}.`;
 		let files = [];
 		if (message.attachments && message.attachments.values) {
