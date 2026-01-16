@@ -129,7 +129,6 @@ client.on("messageCreate", async (message) => {
 			console.log(`Could not fetch alias ${commandName}`);
 		}
 	}
-	console.log(commandName);
 	if (message.content.startsWith(".") && fs.existsSync(`./commands/${commandName}.botcmd`)) {
 		fs.readFile(`./commands/${commandName}.botcmd`, 'utf8', async (err, commandContent) => {
 			if (commandContent === "" || commandContent === null) {
