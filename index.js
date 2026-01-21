@@ -80,7 +80,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", ""].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -255,13 +255,18 @@ client.on("messageCreate", async (message) => {
 			if(err.message) logChannel.send(err.message);
 			return message.reply("Failed to get the Switch Piracy Watchlist role.");
 		}
+		var removeMode = args.length > 1 && ["delete","remove","del"].includes(args[1].toLowerCase());
 		try {
-			await theDumbass.roles.add(switchPiracyRole, "Added by FunkyHelper");
+			if(removeMode) {
+				await theDumbass.roles.remove(switchPiracyRole, "Removed by FunkyHelper");	
+			} else {
+				await theDumbass.roles.add(switchPiracyRole, "Added by FunkyHelper");
+			}
 		} catch(err) {
 			if(err.message) logChannel.send(err.message);
-			return message.reply("Failed to add role to user.");
+			return message.reply(`Failed to ${removeMode?"remove role from":"add role to"} user.`);
 		}
-		return message.reply(theDumbass.toString() + " has been added to the Switch Piracy Watchlist.");
+		return message.reply(`${theDumbass.toString()} has been ${removeMode?"removed from":"added to"} the Switch Piracy Watchlist.`);
 	}
 });
 
