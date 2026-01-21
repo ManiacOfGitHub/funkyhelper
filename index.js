@@ -241,7 +241,7 @@ client.on("messageCreate", async (message) => {
 	await processKeywords(message);
 
 
-	if(["switchpiracy","sp"].includes(message.content.split(" ")[0].toLowerCase())) {
+	if([".switchpiracy",".sp"].includes(message.content.split(" ")[0].toLowerCase())) {
 		if (!message.member.roles.cache.some(role => config.switchPiracyRoleList.includes(role.id))) {
 			return message.reply("no");
 		}
