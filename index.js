@@ -80,7 +80,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", ""].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -239,6 +239,30 @@ client.on("messageCreate", async (message) => {
 
 	// Check for keyword matches in the message
 	await processKeywords(message);
+
+
+	if(message.content.split(" ")[0] === ".switchpiracy") {
+		if (!message.member.roles.cache.some(role => config.switchPiracyRoleList.includes(role.id))) {
+			return message.reply("no");
+		}
+		var theDumbass = message.mentions.members.first();
+		if(!theDumbass) {
+			return message.reply("No user provided");
+		}
+		try {
+			var switchPiracyRole = await message.guild.roles.fetch(config.switchPiracyRoleId);
+		} catch(err) {
+			if(err.message) logChannel.send(err.message);
+			return message.reply("Failed to get the Switch Piracy Watchlist role.");
+		}
+		try {
+			await theDumbass.roles.add(switchPiracyRole, "Added by FunkyHelper");
+		} catch(err) {
+			if(err.message) logChannel.send(err.message);
+			return message.reply("Failed to add role to user.");
+		}
+		return message.reply(theDumbass.toString() + " has been added to the Switch Piracy Watchlist.");
+	}
 });
 
 client.on("messageDelete", async (message) => {
@@ -267,6 +291,7 @@ client.on("messageDelete", async (message) => {
 	}
 });
 
+var logChannel;
 client.once(Events.ClientReady, async() => {
 	console.log('Ready! Logged in as ' + client.user.tag);
 	client.user.setPresence({
@@ -278,7 +303,7 @@ client.once(Events.ClientReady, async() => {
 	});
 
 	try {
-		var logChannel = await client.channels.fetch(config.logChannelId);
+		logChannel = await client.channels.fetch(config.logChannelId);
 		let embed = new EmbedBuilder();
 		embed.setTitle("FunkyHelper is online!");
 		embed.setDescription("The bot has just started. If this happens several times within a few minutes, the bot may be crashing. Please notify a Bot Maintainer if so.");
