@@ -10,6 +10,9 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
+var stickyMessages = {};
+var stickyTimers = {};
+
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
@@ -268,6 +271,11 @@ client.on("messageCreate", async (message) => {
 		}
 		return message.reply(`${theDumbass.toString()} has been ${removeMode?"removed from":"added to"} the Switch Piracy Watchlist.`);
 	}
+
+
+	if(config.stickyMessageChannels.includes(message.channel.id) && Object.keys(stickyMessages).includes(message.channel.id)) {
+		stickyTimers[message.channel.id] = 120;
+	}
 });
 
 client.on("messageDelete", async (message) => {
@@ -297,6 +305,7 @@ client.on("messageDelete", async (message) => {
 });
 
 var logChannel;
+var stickyMessageFile;
 client.once(Events.ClientReady, async() => {
 	console.log('Ready! Logged in as ' + client.user.tag);
 	client.user.setPresence({
@@ -329,6 +338,32 @@ client.once(Events.ClientReady, async() => {
 	if (!fs.existsSync(aliasDir)) {
 		fs.mkdirSync(aliasDir, { recursive: true });
 	}
+	stickyMessageFile = path.join(__dirname, 'stickyMessage.json')
+	if(fs.existsSync(stickyMessageFile)) {
+		var stickyMessagesToDelete = require(stickyMessageFile);
+		for(let channelId in stickyMessagesToDelete) {
+			try {
+				let messageId = stickyMessagesToDelete[channelId];
+				let channel = await client.channels.fetch(channelId);
+				let message = await channel.messages.fetch(messageId);
+				await message.delete();
+			} catch(err) {
+				await logChannel.send(`Failed to delete sticky message on bot startup. Message Info below:\n${channelId}: ${stickyMessagesToDelete[channelId]}\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+			}
+		}
+	}
+	stickyMessages = {};
+	updateStickyMessageFile();
+	for(let channelId of config.stickyMessageChannels) {
+		try {
+			let channel = await client.channels.fetch(channelId);
+			await sendStickyMessage(channel);
+		} catch(err) {
+			await logChannel.send(`Failed to send sticky message on bot startup. Channel ID: ${channelId}\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+		}
+	}
+
+	setInterval(processStickyTimer, 1000);
 });
 
 client.login(config.token);
@@ -423,6 +458,52 @@ async function processKeywords(message) {
 				}
 			}
 			return; // Only respond to the first matching keyword
+		}
+	}
+}
+
+function updateStickyMessageFile() {
+	fs.writeFileSync(stickyMessageFile, JSON.stringify(stickyMessages, null, 2));
+}
+
+async function sendStickyMessage(channel) {
+	try {
+		let embed = new EmbedBuilder();
+		embed.setTitle("Reminder: No Switch Piracy!");
+		embed.setDescription("If you ask for assistance with obtaining or using pirated Nintendo Switch games, you may face moderation action up to and including a permanent ban from the server.");
+		embed.setFooter({text:"This message will always appear at the bottom of relevant channels. Stay Funky and Happy Modding!"});
+		embed.setColor("Gold");
+		let message = await channel.send({embeds:[embed]});
+		stickyMessages[channel.id] = message.id;
+		updateStickyMessageFile();
+	} catch(err) {
+		console.error(err);
+		logChannel.send(`Failed to create sticky message in ${channel?("<#"+channel.id+">"):"unknown channel (lol)"}>.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+	}
+}
+
+async function processStickyTimer() {
+	for(var channelId in stickyTimers) {
+		if(stickyTimers[channelId]>0) {
+			stickyTimers[channelId]--;
+		} else {
+			delete stickyTimers[channelId];
+			try {
+				var channel = await client.channels.fetch(channelId);
+			} catch(err) {
+				await logChannel.send(`Failed to get channel with ID ${channelId} for refreshing sticky message.`);
+				return;
+			}
+			let oldId = stickyMessages[channelId];
+			delete stickyMessages[channelId];
+			updateStickyMessageFile();
+			try {
+				let oldStickyMessage = await channel.messages.fetch(oldId);
+				if(oldStickyMessage) await oldStickyMessage.delete();
+			} catch(err) {
+				await logChannel.send(`Failed to delete old sticky message in <#${channel.id}> after message sent.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+			}
+			await sendStickyMessage(channel);
 		}
 	}
 }
