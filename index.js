@@ -17,6 +17,10 @@ var stickyTimers = {};
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
 
+	if(config.stickyMessageChannels.includes(message.channel.id) && Object.keys(stickyMessages).includes(message.channel.id)) {
+		stickyTimers[message.channel.id] = 120;
+	}
+
 	let args = message.content.split(" ");
 	let commandName = args[0] ? args[0].slice(1) : "";
 	await processWikiCommands(message);
@@ -83,7 +87,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -243,9 +247,28 @@ client.on("messageCreate", async (message) => {
 	// Check for keyword matches in the message
 	await processKeywords(message);
 
+	if([".say",'.echo'].includes(message.content.split(" ")[0].toLowerCase())) {
+		if(args.length < 3) {
+			await message.reply("Not enough arguments");
+			return;
+		}
+		var channel;
+		var channelId = args[1].matchAll(/\d/g).toArray().join("");
+		if(channelId) {
+			try {
+				channel = await message.guild.channels.fetch(channelId);
+			} catch(err) {}
+		}
+		if(!channel) {
+			await message.reply("Valid channel was not provided.");
+			return;
+		}
+		await channel.send(args.slice(2).join(" "));
+		await message.reply("Message sent.");
+	}
 
 	if([".switchpiracy",".sp"].includes(message.content.split(" ")[0].toLowerCase())) {
-		if (!message.member.roles.cache.some(role => config.switchPiracyRoleList.includes(role.id))) {
+		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id))) {
 			return message.reply("no");
 		}
 		var theDumbass = message.mentions.members.first();
@@ -270,11 +293,6 @@ client.on("messageCreate", async (message) => {
 			return message.reply(`Failed to ${removeMode?"remove role from":"add role to"} user.`);
 		}
 		return message.reply(`${theDumbass.toString()} has been ${removeMode?"removed from":"added to"} the Switch Piracy Watchlist.`);
-	}
-
-
-	if(config.stickyMessageChannels.includes(message.channel.id) && Object.keys(stickyMessages).includes(message.channel.id)) {
-		stickyTimers[message.channel.id] = 120;
 	}
 });
 
