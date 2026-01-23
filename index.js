@@ -3,6 +3,7 @@ const config = require('./config.json');
 const fs = require('fs');
 const path = require('path');
 const { log } = require('console');
+const { match } = require('assert');
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
@@ -11,14 +12,15 @@ const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
 var stickyMessages = {};
-var stickyTimers = {};
+var timers = {};
+var matchmakingTimer = 0;
 
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
 
 	if(config.stickyMessageChannels.includes(message.channel.id) && Object.keys(stickyMessages).includes(message.channel.id)) {
-		stickyTimers[message.channel.id] = 120;
+		timers[message.channel.id] = 120;
 	}
 
 	let args = message.content.split(" ");
@@ -87,7 +89,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -256,7 +258,7 @@ client.on("messageCreate", async (message) => {
 			return;
 		}
 		var channel;
-		var channelId = args[1].matchAll(/\d/g).toArray().join("");
+		let channelId = args[1].matchAll(/\d/g).toArray().join("");
 		if(channelId) {
 			try {
 				channel = await message.guild.channels.fetch(channelId);
@@ -268,6 +270,55 @@ client.on("messageCreate", async (message) => {
 		}
 		await channel.send(args.slice(2).join(" "));
 		await message.reply("Message sent.");
+	}
+
+	if(message.content.split(" ")[0].toLowerCase() == ".reply") {
+		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id))) {
+			return message.reply("no");
+		}
+		if(args.length < 4) {
+			await message.reply("Not enough arguments");
+			return;
+		}
+		var channel;
+		let channelId = args[1].matchAll(/\d/g).toArray().join("");
+		if(channelId) {
+			try {
+				channel = await message.guild.channels.fetch(channelId);
+			} catch(err) {}
+		};
+		if(!channel) {
+			await message.reply("Valid channel was not provided.");
+			return;
+		};
+		let messageToReplyTo;
+		let messageId = args[2].matchAll(/\d/g).toArray().join("");
+		if(messageId) {
+			try {
+				messageToReplyTo = await channel.messages.fetch(messageId);
+			} catch(err) {};
+		}
+		if(!messageToReplyTo) {
+			await message.reply("Message not found.");
+			return;
+		}
+		await messageToReplyTo.reply(args.slice(3).join(" "));
+		await message.reply("Message sent.");
+	}
+
+	if(message.content.split(" ")[0].toLowerCase() == ".matchmaking") {
+		if(message.channel.id!=config.matchmakingChannelId) {
+			await message.reply("This command can only be used in <#" + config.matchmakingChannelId + ">");
+			return;
+		}
+		if(matchmakingTimer != 0) {
+			var minutes = Math.floor(matchmakingTimer/60);
+			var seconds = matchmakingTimer % 60;
+			await message.reply("This command is on cooldown. Wait " + (minutes ? minutes.toString() + " minute" + (minutes!=1 ? "s" : "") + " and " : "") + (seconds.toString() + " second" + (seconds!=1 ? "s" : "")) + " before sending again");
+		} else {
+			matchmakingTimer = 60 * 10;
+			await message.channel.send("<@&"+config.matchmakingRoleId+">");
+		}
 	}
 
 	if([".switchpiracy",".sp"].includes(message.content.split(" ")[0].toLowerCase())) {
@@ -384,7 +435,7 @@ client.once(Events.ClientReady, async() => {
 		}
 	}
 
-	setInterval(processStickyTimer, 1000);
+	setInterval(processTimers, 1000);
 });
 
 client.login(config.token);
@@ -503,12 +554,12 @@ async function sendStickyMessage(channel) {
 	}
 }
 
-async function processStickyTimer() {
-	for(var channelId in stickyTimers) {
-		if(stickyTimers[channelId]>0) {
-			stickyTimers[channelId]--;
+async function processTimers() {
+	for(var channelId in timers) {
+		if(timers[channelId]>0) {
+			timers[channelId]--;
 		} else {
-			delete stickyTimers[channelId];
+			delete timers[channelId];
 			try {
 				var channel = await client.channels.fetch(channelId);
 			} catch(err) {
@@ -526,5 +577,8 @@ async function processStickyTimer() {
 			}
 			await sendStickyMessage(channel);
 		}
+	}
+	if(matchmakingTimer > 0) {
+		matchmakingTimer--;
 	}
 }
