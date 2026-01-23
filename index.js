@@ -248,6 +248,9 @@ client.on("messageCreate", async (message) => {
 	await processKeywords(message);
 
 	if([".say",'.echo'].includes(message.content.split(" ")[0].toLowerCase())) {
+		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id))) {
+			return message.reply("no");
+		}
 		if(args.length < 3) {
 			await message.reply("Not enough arguments");
 			return;
