@@ -7,7 +7,7 @@ const { match } = require('assert');
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users', 'roles']}});
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
 const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
