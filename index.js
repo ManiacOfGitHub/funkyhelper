@@ -174,7 +174,7 @@ client.on("messageCreate", async (message) => {
 				if (message.reference) {
 					(await message.fetchReference()).reply({ embeds: [embed] });
 				} else {
-					message.channel.send({ embeds: [embed], allowedMentions: {parse}});
+					message.channel.send({ embeds: [embed] });
 				}
 			} catch {
 				if (message.reference) {
