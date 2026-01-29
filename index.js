@@ -268,8 +268,13 @@ client.on("messageCreate", async (message) => {
 			await message.reply("Valid channel was not provided.");
 			return;
 		}
-		await channel.send(args.slice(2).join(" "));
-		await message.reply("Message sent.");
+		try {
+			await channel.send(args.slice(2).join(" "));
+			await message.reply("Message sent.");
+		} catch(err) {
+			console.error(err);
+			await channel.send("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".reply") {
@@ -302,8 +307,13 @@ client.on("messageCreate", async (message) => {
 			await message.reply("Message not found.");
 			return;
 		}
-		await messageToReplyTo.reply(args.slice(3).join(" "));
-		await message.reply("Message sent.");
+		try {
+			await messageToReplyTo.reply(args.slice(3).join(" "));
+			await message.reply("Message sent.");
+		} catch(err) {
+			console.error(err);
+			await channel.send("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".matchmaking") {
