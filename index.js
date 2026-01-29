@@ -273,7 +273,7 @@ client.on("messageCreate", async (message) => {
 			await message.reply("Message sent.");
 		} catch(err) {
 			console.error(err);
-			await channel.send("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 	}
 
@@ -312,7 +312,7 @@ client.on("messageCreate", async (message) => {
 			await message.reply("Message sent.");
 		} catch(err) {
 			console.error(err);
-			await channel.send("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 	}
 
