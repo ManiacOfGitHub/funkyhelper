@@ -468,16 +468,17 @@ async function processWikiCommands(message) {
 	let currentMessageContent = message.content;
 	let numLooped = 0;
 
-	while (currentMessageContent.includes("[[") && numLooped < 10) {
-		let wikiCommandStart = currentMessageContent.split("[[").slice(1).join("[[");
-		if (!wikiCommandStart.includes("]]")) return;
-		let wikiCommand = wikiCommandStart.split("]]")[0];
-		let wikiURL = await generateWikiPage(wikiCommand);
-		if (!wikiURL) return;
-		botMessage += (botMessage ? ", " : "") + wikiURL;
-		currentMessageContent = wikiCommandStart.split("]]").slice(1).join("]]");
-		numLooped++;
-	}
+	while (content.includes("[[") && count < 5) {
+    let start = content.split("[[").slice(1).join("[[");
+    if (!start.includes("]]")) break;
+    
+    let query = start.split("]]")[0];
+    let url = await generateWikiPage(query);
+    
+    if (url) botMessage += (botMessage ? ", " : "") + url;
+    content = start.split("]]").slice(1).join("]]");
+    count++;
+}
 	if (!botMessage) return;
 	botMessage = `Link${numLooped > 1 ? "s" : ""}: ${botMessage}`;
 	if (message.reference) {
@@ -590,5 +591,22 @@ async function processTimers() {
 	}
 	if(matchmakingTimer > 0) {
 		matchmakingTimer--;
+	}
+}
+
+const helpTriggers = [
+	"can anyone help me",
+	"can someone help me",
+	"can anybody help me",
+	"i need help"
+];
+
+const cleanContent = message.content.toLowerCase();
+
+if (helpTriggers.some(trigger => cleanContent.includes(trigger))) {
+	if (message.content.length < 25) {
+		return message.reply({
+			content: "Please explain what you are having trouble with in detail so we may help you better. (e.g., What are you doing that's causing you trouble?)"
+		});
 	}
 }
