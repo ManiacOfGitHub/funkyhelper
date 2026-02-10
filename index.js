@@ -394,7 +394,7 @@ client.on("messageCreate", async (message) => {
 		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to pull from the repo.");
 		}
-		exec("git pull", async(err,stderr, stdout)=>{
+		exec("git pull", async(err, stdout)=>{
 			if(err) {
 				console.error(err);
 				return message.reply("Git pull failed somehow. Idk");
