@@ -391,8 +391,8 @@ client.on("messageCreate", async (message) => {
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".pull") {
-		if (!havePermission(message.member)) {
-			return message.reply("You do not have permission to pull from the repo.");
+		if (!config.botOwners.includes(message.member.id)) {
+			return message.reply("You do not have permission to pull from the repo. (You must be part of the `botOwners` list)");
 		}
 		exec("git pull", async(err, stdout)=>{
 			if(err) {
@@ -416,8 +416,8 @@ client.on("messageCreate", async (message) => {
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".config") {
-		if (!havePermission(message.member)) {
-			return message.reply("You do not have permission to edit the configuration.");
+		if (!config.botOwners.includes(message.member.id)) {
+			return message.reply("You do not have permission to edit the configuration. (You must be part of the `botOwners` list)");
 		}
 
 		let content = args.slice(1).join(" ");
