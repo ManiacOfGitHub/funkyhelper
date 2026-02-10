@@ -636,7 +636,7 @@ async function sendStickyMessage(channel) {
 	try {
 		let embed = new EmbedBuilder();
 		embed.setTitle("Reminder: No Switch Piracy!");
-		embed.setDescription("If you ask for assistance with obtaining or using pirated Nintendo Switch games, you may face moderation action up to and including a permanent ban from the server.");
+		embed.setDescription("If you ask for or give assistance with obtaining or using pirated Nintendo Switch games, you may face moderation action up to and including a permanent ban from the server.");
 		embed.setFooter({text:"This message will always appear at the bottom of relevant channels. Stay Funky and Happy Modding!"});
 		embed.setColor("Gold");
 		let message = await channel.send({embeds:[embed]});
