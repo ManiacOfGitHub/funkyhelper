@@ -5,7 +5,6 @@ const path = require('path');
 const { log } = require('console');
 const { match } = require('assert');
 const { exec } = require('child_process');
-const { stop } = require("process");
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
@@ -403,8 +402,8 @@ client.on("messageCreate", async (message) => {
 			if(stdout) {
 				await message.reply(stdout);
 			}
-			await message.reply("Bot is now restarting... (unless you don't have monit lol, then it'll just stop)");
-			stop();
+			await message.reply("Bot is now restarting... (unless you don't have monit lol)");
+			exec("monit restart funkyhelper");
 		});
 	}
 
@@ -412,8 +411,8 @@ client.on("messageCreate", async (message) => {
 		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to restart the bot.");
 		}
-		await message.reply("Bot is now restarting... (unless you don't have monit lol, then it'll just stop)");
-		stop();
+		await message.reply("Bot is now restarting... (unless you don't have monit lol)");
+		exec("monit restart funkyhelper");
 	}
 });
 
