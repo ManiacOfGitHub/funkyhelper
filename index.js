@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const { log } = require('console');
 const { match } = require('assert');
+const { exec } = require('child_process');
+const { stop } = require("process");
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
@@ -89,7 +91,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply", "pull", "stop"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -387,6 +389,31 @@ client.on("messageCreate", async (message) => {
 			}
 		}
 		return message.reply(replyMsg);
+	}
+
+	if(message.content.split(" ")[0].toLowerCase() == ".pull") {
+		if (!havePermission(message.member)) {
+			return message.reply("You do not have permission to pull from the repo.");
+		}
+		exec("git pull", async(err,stderr, stdout)=>{
+			if(err) {
+				console.error(err);
+				return message.reply("Git pull failed somehow. Idk");
+			}
+			if(stdout) {
+				await message.reply(stdout);
+			}
+			await message.reply("Bot is now restarting... (unless you don't have monit lol, then it'll just stop)");
+			stop();
+		});
+	}
+
+	if(message.content.split(" ")[0].toLowerCase() == ".stop") {
+		if (!havePermission(message.member)) {
+			return message.reply("You do not have permission to restart the bot.");
+		}
+		await message.reply("Bot is now restarting... (unless you don't have monit lol, then it'll just stop)");
+		stop();
 	}
 });
 
