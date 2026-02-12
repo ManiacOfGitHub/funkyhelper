@@ -1,28 +1,25 @@
 const { Client, Events, GatewayIntentBits, EmbedBuilder, AttachmentBuilder, ActivityType } = require('discord.js');
-const config = require('./config.json');
 const fs = require('fs');
 const path = require('path');
-const { log } = require('console');
-const { match } = require('assert');
 const { exec } = require('child_process');
-
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
+var config = require('./config.json');
+var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
+var matchmakingTimer = 0;
+var logChannel;
+
 const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
-var stickyMessages = {};
-var timers = {};
-var matchmakingTimer = 0;
+
+var stickyMessageLib;
 
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
 
-	if(config.stickyMessageChannels.includes(message.channel.id) && Object.keys(stickyMessages).includes(message.channel.id)) {
-		timers[message.channel.id] = 120;
-	}
+	await stickyMessageLib.onMessage(message);
 
 	let args = message.content.split(" ");
 	let commandName = args[0] ? args[0].slice(1) : "";
@@ -433,7 +430,7 @@ client.on("messageCreate", async (message) => {
 		for(let i in content) {
 			config[i] = content[i];
 		}
-
+		 
 		try {
 			fs.writeFileSync("config.json", JSON.stringify(config, null, 2));
 		} catch(err) {
@@ -470,8 +467,6 @@ client.on("messageDelete", async (message) => {
 	}
 });
 
-var logChannel;
-var stickyMessageFile;
 client.once(Events.ClientReady, async() => {
 	console.log('Ready! Logged in as ' + client.user.tag);
 	client.user.setPresence({
@@ -490,7 +485,7 @@ client.once(Events.ClientReady, async() => {
 		embed.setColor("Aqua");
 		await logChannel.send({embeds:[embed]});
 	} catch(err) {
-		console.log("Failed to send startup message.");
+		console.log("Failed to send startup message.\n"+err);
 	}
 	const commandsDir = path.join(__dirname, 'commands');
 	if (!fs.existsSync(commandsDir)) {
@@ -504,30 +499,9 @@ client.once(Events.ClientReady, async() => {
 	if (!fs.existsSync(aliasDir)) {
 		fs.mkdirSync(aliasDir, { recursive: true });
 	}
-	stickyMessageFile = path.join(__dirname, 'stickyMessage.json')
-	if(fs.existsSync(stickyMessageFile)) {
-		var stickyMessagesToDelete = require(stickyMessageFile);
-		for(let channelId in stickyMessagesToDelete) {
-			try {
-				let messageId = stickyMessagesToDelete[channelId];
-				let channel = await client.channels.fetch(channelId);
-				let message = await channel.messages.fetch(messageId);
-				await message.delete();
-			} catch(err) {
-				await logChannel.send(`Failed to delete sticky message on bot startup. Message Info below:\n${channelId}: ${stickyMessagesToDelete[channelId]}\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
-			}
-		}
-	}
-	stickyMessages = {};
-	updateStickyMessageFile();
-	for(let channelId of config.stickyMessageChannels) {
-		try {
-			let channel = await client.channels.fetch(channelId);
-			await sendStickyMessage(channel);
-		} catch(err) {
-			await logChannel.send(`Failed to send sticky message on bot startup. Channel ID: ${channelId}\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
-		}
-	}
+
+	stickyMessageLib = (require("./lib/stickyMessages"))(client, logChannel, config);
+	await stickyMessageLib.onReady();
 
 	setInterval(processTimers, 1000);
 });
@@ -628,50 +602,9 @@ async function processKeywords(message) {
 	}
 }
 
-function updateStickyMessageFile() {
-	fs.writeFileSync(stickyMessageFile, JSON.stringify(stickyMessages, null, 2));
-}
-
-async function sendStickyMessage(channel) {
-	try {
-		let embed = new EmbedBuilder();
-		embed.setTitle("Reminder: No Switch Piracy!");
-		embed.setDescription("If you ask for or give assistance with obtaining or using pirated Nintendo Switch games, you may face moderation action up to and including a permanent ban from the server.");
-		embed.setFooter({text:"This message will always appear at the bottom of relevant channels. Stay Funky and Happy Modding!"});
-		embed.setColor("Gold");
-		let message = await channel.send({embeds:[embed]});
-		stickyMessages[channel.id] = message.id;
-		updateStickyMessageFile();
-	} catch(err) {
-		console.error(err);
-		logChannel.send(`Failed to create sticky message in ${channel?("<#"+channel.id+">"):"unknown channel (lol)"}>.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
-	}
-}
 
 async function processTimers() {
-	for(var channelId in timers) {
-		if(timers[channelId]>0) {
-			timers[channelId]--;
-		} else {
-			delete timers[channelId];
-			try {
-				var channel = await client.channels.fetch(channelId);
-			} catch(err) {
-				await logChannel.send(`Failed to get channel with ID ${channelId} for refreshing sticky message.`);
-				return;
-			}
-			let oldId = stickyMessages[channelId];
-			delete stickyMessages[channelId];
-			updateStickyMessageFile();
-			try {
-				let oldStickyMessage = await channel.messages.fetch(oldId);
-				if(oldStickyMessage) await oldStickyMessage.delete();
-			} catch(err) {
-				await logChannel.send(`Failed to delete old sticky message in <#${channel.id}> after message sent.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
-			}
-			await sendStickyMessage(channel);
-		}
-	}
+	await stickyMessageLib.processTimers();
 	if(matchmakingTimer > 0) {
 		matchmakingTimer--;
 	}
