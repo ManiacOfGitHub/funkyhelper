@@ -13,13 +13,26 @@ const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
 
-var stickyMessageLib;
+var stickyMessageLib, withdrawalScamLib;
 
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
 
-	await stickyMessageLib.onMessage(message);
+	if(stickyMessageLib && withdrawalScamLib) {
+
+		await stickyMessageLib.onMessage(message);
+
+		(async()=>{
+			try {
+				await withdrawalScamLib.onMessage(message);
+			} catch(err) {
+				console.error(err);
+				await logChannel.send("An error occured with the withdrawalScam library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+				await withdrawalScamLib.liftLock();
+			}
+		})();
+	}
 
 	let args = message.content.split(" ");
 	let commandName = args[0] ? args[0].slice(1) : "";
@@ -502,6 +515,9 @@ client.once(Events.ClientReady, async() => {
 
 	stickyMessageLib = (require("./lib/stickyMessages"))(client, logChannel, config);
 	await stickyMessageLib.onReady();
+
+	withdrawalScamLib = (require("./lib/withdrawalScam"))(client, logChannel, config);
+	await withdrawalScamLib.onReady();
 
 	setInterval(processTimers, 1000);
 });
