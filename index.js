@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const util = require('./lib/util');
 
 var config = require('./config.json');
 var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
@@ -13,14 +14,14 @@ const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
 
-var stickyMessageLib, withdrawalScamLib;
+var stickyMessageLib, withdrawalScamLib, onBreakLib;
+var libLoaded = false;
 
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
 
-	if(stickyMessageLib && withdrawalScamLib) {
-
+	if(libLoaded) {
 		await stickyMessageLib.onMessage(message);
 
 		(async()=>{
@@ -37,6 +38,15 @@ client.on("messageCreate", async (message) => {
 	let args = message.content.split(" ");
 	let commandName = args[0] ? args[0].slice(1) : "";
 	await processWikiCommands(message);
+
+	if(libLoaded && message.content.startsWith(".")) {
+		try {
+			await onBreakLib.onCommand(commandName, args, message);
+		} catch(err) {
+			console.error(err);
+			await logChannel.send("An error occured with the onBreakLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+	}
 
 	// Alias create command
 	if (message.content.split(" ")[0] === ".alias") {
@@ -518,6 +528,10 @@ client.once(Events.ClientReady, async() => {
 
 	withdrawalScamLib = (require("./lib/withdrawalScam"))(client, logChannel, config);
 	await withdrawalScamLib.onReady();
+
+	onBreakLib = (require("./lib/onBreak"))(client, logChannel, config);
+
+	libLoaded = true;
 
 	setInterval(processTimers, 1000);
 });
