@@ -261,7 +261,7 @@ client.on("messageCreate", async (message) => {
 	await processKeywords(message);
 
 	if([".say",'.echo'].includes(message.content.split(" ")[0].toLowerCase())) {
-		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id))) {
+		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id)) && !havePermission(message.member)) {
 			return message.reply("no");
 		}
 		if(args.length < 3) {
@@ -289,7 +289,7 @@ client.on("messageCreate", async (message) => {
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".reply") {
-		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id))) {
+		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id)) && !havePermission(message.member)) {
 			return message.reply("no");
 		}
 		if(args.length < 4) {
