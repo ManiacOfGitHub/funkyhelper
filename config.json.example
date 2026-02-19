@@ -15,5 +15,19 @@
     "botOwners": ["366366250387111937", "1141501087191408661", "544316051827982377"],
     "fullPermsMode": true,
     "withdrawalScamCheckEnabled": true,
-    "extraWithdrawalScamTerms": ["caraslots"]
+    "extraWithdrawalScamTerms": ["caraslots"],
+    "consoleHelpChannels": {
+        "1461160222302273578": "emulator",
+        "1461160222302273579": "switch",
+        "1461160222302273580": "wiiu",
+        "1461160222302273581": "3ds",
+        "1461160222302273582": "wii",
+        "1461160222302273583": "dsi"
+    },
+    "consoleAliases": {
+        "emulator": ["emu"],
+        "switch": ["sw1", "ns", "nx"],
+        "wii": ["vwii"],
+        "dsi": ["ds", "nds"] 
+    }
 }
