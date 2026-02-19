@@ -14,7 +14,7 @@ const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
 
-var stickyMessageLib, withdrawalScamLib, onBreakLib;
+var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib;
 var libLoaded = false;
 
 
@@ -36,7 +36,7 @@ client.on("messageCreate", async (message) => {
 	}
 
 	let args = message.content.split(" ");
-	let commandName = args[0] ? args[0].slice(1) : "";
+	let commandName = (args[0] ? args[0].slice(1) : "").toLowerCase();
 	await processWikiCommands(message);
 
 	if(libLoaded && message.content.startsWith(".")) {
@@ -152,59 +152,13 @@ client.on("messageCreate", async (message) => {
 		});
 	}
 
-	commandName = commandName.toLowerCase();
-	if (message.content.startsWith(".") && fs.existsSync(`./alias/${commandName}.alias`)) {
+	if(libLoaded && message.content.startsWith(".")) {
 		try {
-			commandName = fs.readFileSync(`./alias/${commandName}.alias`, 'utf8');
+			await customCommandLib.onCommand(commandName, args, message);
 		} catch(err) {
-			console.log(`Could not fetch alias ${commandName}`);
+			console.error(err);
+			await logChannel.send("An error occured with a custom commands. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
-	}
-	if (message.content.startsWith(".") && fs.existsSync(`./commands/${commandName}.botcmd`)) {
-		fs.readFile(`./commands/${commandName}.botcmd`, 'utf8', async (err, commandContent) => {
-			if (commandContent === "" || commandContent === null) {
-				return message.reply("Command content is empty.");
-			}
-			if (err) return;
-			try {
-				if (!(commandContent.startsWith("`") && commandContent.endsWith("`"))) {
-					throw Error();
-				}
-				let data = JSON.parse(commandContent.slice(1, -1));
-				let embed = new EmbedBuilder();
-				if (data.author) embed.setAuthor({ name: data.author });
-				if (data.title) embed.setTitle(data.title);
-				if (data.color) {
-					var consoleColors = {
-						"3DS": 0xCE181E,
-						"WiiU": 0x009AC7,
-						"Switch": 0xE60012,
-						"Wii": 0x009AC7
-					}
-					if (data.color in consoleColors) {
-						embed.setColor(consoleColors[data.color]);
-					} else {
-						embed.setColor(parseInt(data.color, 16));
-					}
-				};
-				if (data.image) embed.setImage(data.image);
-				if (data.description) embed.setDescription(data.description);
-				if (data.footer) embed.setFooter({ text: data.footer });
-				if (data.url) embed.setURL(data.url);
-
-				if (message.reference) {
-					(await message.fetchReference()).reply({ embeds: [embed] });
-				} else {
-					message.channel.send({ embeds: [embed] });
-				}
-			} catch {
-				if (message.reference) {
-					(await message.fetchReference()).reply(commandContent);
-				} else {
-					message.channel.send(commandContent);
-				}
-			}
-		});
 	}
 
 	if (message.content === ".test") {
@@ -530,6 +484,8 @@ client.once(Events.ClientReady, async() => {
 	await withdrawalScamLib.onReady();
 
 	onBreakLib = (require("./lib/onBreak"))(client, logChannel, config);
+
+	customCommandLib = (require("./lib/customCommand"))(client, logChannel, config);
 
 	libLoaded = true;
 
