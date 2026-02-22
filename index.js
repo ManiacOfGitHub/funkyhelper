@@ -235,7 +235,7 @@ client.on("messageCreate", async (message) => {
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
 		if((channelId != config.offTopicChannelId) && !config.botOwners.includes(message.member.id)) {
-			await message.reply("You only have permission to `.say` in <#"+config.offTopicChannelId+">.");
+			await message.reply("You only have permission to send a message as the bot in <#"+config.offTopicChannelId+">.");
 			return;
 		}
 		if(channelId) {
@@ -249,10 +249,14 @@ client.on("messageCreate", async (message) => {
 		}
 		try {
 			await channel.send(args.slice(2).join(" "));
-			await message.reply("Message sent.");
 		} catch(err) {
 			console.error(err);
 			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+		try {
+			await message.delete();
+		} catch(err) {
+			//I really don't care enough to do anything with this.
 		}
 	}
 
@@ -267,7 +271,7 @@ client.on("messageCreate", async (message) => {
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
 		if((channelId != config.offTopicChannelId) && !config.botOwners.includes(message.member.id)) {
-			await message.reply("You only have permission to `.reply` in <#"+config.offTopicChannelId+">.");
+			await message.reply("You only have permission to reply to a message as the bot in <#"+config.offTopicChannelId+">.");
 			return;
 		}
 		if(channelId) {
@@ -292,10 +296,14 @@ client.on("messageCreate", async (message) => {
 		}
 		try {
 			await messageToReplyTo.reply(args.slice(3).join(" "), {allowedMentions:{repliedUser: false}});
-			await message.reply("Message sent.");
 		} catch(err) {
 			console.error(err);
 			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+		try {
+			await message.delete();
+		} catch(err) {
+			//I really don't care enough to do anything with this.
 		}
 	}
 
