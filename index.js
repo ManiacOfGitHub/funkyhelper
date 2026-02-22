@@ -283,7 +283,7 @@ client.on("messageCreate", async (message) => {
 			return;
 		}
 		try {
-			await messageToReplyTo.reply(args.slice(3).join(" "));
+			await messageToReplyTo.reply(args.slice(3).join(" "), {allowedMentions:{repliedUser: false}});
 			await message.reply("Message sent.");
 		} catch(err) {
 			console.error(err);
