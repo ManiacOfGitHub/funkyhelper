@@ -225,7 +225,7 @@ client.on("messageCreate", async (message) => {
 	await processKeywords(message);
 
 	if([".say",'.echo'].includes(message.content.split(" ")[0].toLowerCase())) {
-		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id)) && !havePermission(message.member)) {
+		if (!message.member.roles.cache.some(role => config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
 			return message.reply("no");
 		}
 		if(args.length < 3) {
@@ -234,6 +234,10 @@ client.on("messageCreate", async (message) => {
 		}
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
+		if((channelId != config.offTopicChannelId) && !config.botOwners.includes(message.member.id)) {
+			await message.reply("You only have permission to `.say` in <#"+config.offTopicChannelId+">.");
+			return;
+		}
 		if(channelId) {
 			try {
 				channel = await message.guild.channels.fetch(channelId);
@@ -253,7 +257,7 @@ client.on("messageCreate", async (message) => {
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".reply") {
-		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id)) && !havePermission(message.member)) {
+		if (!message.member.roles.cache.some(role => config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
 			return message.reply("no");
 		}
 		if(args.length < 4) {
@@ -262,6 +266,10 @@ client.on("messageCreate", async (message) => {
 		}
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
+		if((channelId != config.offTopicChannelId) && !config.botOwners.includes(message.member.id)) {
+			await message.reply("You only have permission to `.reply` in <#"+config.offTopicChannelId+">.");
+			return;
+		}
 		if(channelId) {
 			try {
 				channel = await message.guild.channels.fetch(channelId);
