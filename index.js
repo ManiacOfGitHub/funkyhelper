@@ -20,26 +20,24 @@ var libLoaded = false;
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
+	if(!libLoaded) return;
+	await stickyMessageLib.onMessage(message);
 
-	if(libLoaded) {
-		await stickyMessageLib.onMessage(message);
-
-		(async()=>{
-			try {
-				await withdrawalScamLib.onMessage(message);
-			} catch(err) {
-				console.error(err);
-				await logChannel.send("An error occured with the withdrawalScam library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-				await withdrawalScamLib.liftLock();
-			}
-		})();
-	}
+	(async()=>{
+		try {
+			await withdrawalScamLib.onMessage(message);
+		} catch(err) {
+			console.error(err);
+			await logChannel.send("An error occured with the withdrawalScam library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await withdrawalScamLib.liftLock();
+		}
+	})();
 
 	let args = message.content.split(" ");
 	let commandName = (args[0] ? args[0].slice(1) : "").toLowerCase();
 	await processWikiCommands(message);
 
-	if(libLoaded && message.content.startsWith(".")) {
+	if(message.content.startsWith(".")) {
 		try {
 			await onBreakLib.onCommand(commandName, args, message);
 		} catch(err) {
@@ -152,7 +150,7 @@ client.on("messageCreate", async (message) => {
 		});
 	}
 
-	if(libLoaded && message.content.startsWith(".")) {
+	if(message.content.startsWith(".")) {
 		try {
 			await customCommandLib.onCommand(commandName, args, message);
 		} catch(err) {
@@ -234,8 +232,8 @@ client.on("messageCreate", async (message) => {
 		}
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
-		if((channelId != config.offTopicChannelId) && !config.botOwners.includes(message.member.id)) {
-			await message.reply("You only have permission to send a message as the bot in <#"+config.offTopicChannelId+">.");
+		if((!config.echoChannelIds.includes(channelId)) && !config.botOwners.includes(message.member.id)) {
+			await message.reply(`You cannot \`.${commandName}\` into that channel. You can \`.${commandName}\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
 			return;
 		}
 		if(channelId) {
@@ -270,8 +268,8 @@ client.on("messageCreate", async (message) => {
 		}
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
-		if((channelId != config.offTopicChannelId) && !config.botOwners.includes(message.member.id)) {
-			await message.reply("You only have permission to reply to a message as the bot in <#"+config.offTopicChannelId+">.");
+		if((config.echoChannelIds.includes(channelId)) && !config.botOwners.includes(message.member.id)) {
+			await message.reply(`You cannot \`.reply\` into that channel. You can \`.reply\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
 			return;
 		}
 		if(channelId) {
