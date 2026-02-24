@@ -1,4 +1,4 @@
-const { Client, Events, GatewayIntentBits, EmbedBuilder, AttachmentBuilder, ActivityType } = require('discord.js');
+const { Client, Events, GatewayIntentBits, EmbedBuilder, AttachmentBuilder, ActivityType, AuditLogEvent } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
@@ -6,7 +6,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const util = require('./lib/util');
 
 var config = require('./config.json');
-var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
+var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
 var matchmakingTimer = 0;
 var logChannel;
 
@@ -396,7 +396,7 @@ client.on("messageCreate", async (message) => {
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".stop") {
-		if (!havePermission(message.member)) {
+		if (!config.botOwners.includes(message.member.id)) {
 			return message.reply("You do not have permission to restart the bot.");
 		}
 		await message.reply("Bot is now restarting... (unless you don't have monit lol)");
@@ -430,6 +430,7 @@ client.on("messageCreate", async (message) => {
 
 		return message.reply("Updated config! In some cases, you may need to restart the bot for the changes to apply.");
 	}
+	await message.member.roles.add([await message.guild.roles.fetch("1461160220360310916"),await message.guild.roles.fetch("1461160220305789030")])
 });
 
 client.on("messageDelete", async (message) => {
@@ -457,6 +458,47 @@ client.on("messageDelete", async (message) => {
 		await logChannel.send({ content: messageText, flags: [4096], files });
 	}
 });
+
+client.on("guildAuditLogEntryCreate", async(auditEntry, guild)=>{
+	try {
+		if(!logChannel) return;
+		if(auditEntry.action !== AuditLogEvent.MemberRoleUpdate) return;
+		let minRolePosition = (await guild.roles.fetch(config.logMinRole)).position;
+		for(var change of auditEntry.changes) {
+			let roleIds = [];
+			for(var role of change.new) {
+				var role = await guild.roles.fetch(role.id);
+				if(role.position>=minRolePosition) {
+					roleIds.push(role.id);
+				}
+			}
+			if(roleIds.length < 1) return;
+			if(change.key=="$add") {
+				let addRoleEmbed = new EmbedBuilder();
+				addRoleEmbed.setAuthor({name:auditEntry.target.username,iconURL:auditEntry.target.displayAvatarURL({extension:"png",size:2048})});
+				addRoleEmbed.setTitle(`Role${(roleIds.length > 1) ? "s" : ""} added`);
+				addRoleEmbed.setDescription(`${roleIds.map(o=>`<@&${o}>`).join(", ")}`);
+				addRoleEmbed.setFooter({text:"ID: " + auditEntry.id});
+				addRoleEmbed.setTimestamp();
+				await logChannel.send({embeds: [addRoleEmbed], allowedMentions: {roles: []}});
+			}
+			if(change.key=="$remove") {
+				let removeRoleEmbed = new EmbedBuilder();
+				removeRoleEmbed.setAuthor({name:auditEntry.target.username,iconURL:auditEntry.target.displayAvatarURL({extension:"png",size:2048})});
+				removeRoleEmbed.setTitle(`Role${(roleIds.length > 1) ? "s" : ""} removed`);
+				removeRoleEmbed.setDescription(`${roleIds.map(o=>`<@&${o}>`).join(", ")}`);
+				removeRoleEmbed.setFooter({text:"ID: " + auditEntry.id});
+				removeRoleEmbed.setTimestamp();
+				await logChannel.send({embeds: [removeRoleEmbed], allowedMentions: {roles: []}});
+			}
+		}
+	} catch(err) {
+		console.error(err);
+		try {
+			await logChannel.send("Failed to process audit log entry creation\nError info: " + (err?(err.message??"syke lmao"):"syke lmao")) 
+		} catch(err) {}
+	}
+})
 
 client.once(Events.ClientReady, async() => {
 	console.log('Ready! Logged in as ' + client.user.tag);
