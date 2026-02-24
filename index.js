@@ -477,7 +477,7 @@ client.on("guildAuditLogEntryCreate", async(auditEntry, guild)=>{
 				addRoleEmbed.setAuthor({name:auditEntry.target.username,iconURL:auditEntry.target.displayAvatarURL({extension:"png",size:2048})});
 				addRoleEmbed.setTitle(`Role${(roleIds.length > 1) ? "s" : ""} added`);
 				addRoleEmbed.setDescription(`${roleIds.map(o=>`<@&${o}>`).join(", ")}`);
-				addRoleEmbed.setFooter({text:"ID: " + auditEntry.id});
+				addRoleEmbed.setFooter({text:"ID: " + auditEntry.target.id});
 				addRoleEmbed.setTimestamp();
 				await logChannel.send({embeds: [addRoleEmbed], allowedMentions: {roles: []}});
 			}
@@ -486,7 +486,7 @@ client.on("guildAuditLogEntryCreate", async(auditEntry, guild)=>{
 				removeRoleEmbed.setAuthor({name:auditEntry.target.username,iconURL:auditEntry.target.displayAvatarURL({extension:"png",size:2048})});
 				removeRoleEmbed.setTitle(`Role${(roleIds.length > 1) ? "s" : ""} removed`);
 				removeRoleEmbed.setDescription(`${roleIds.map(o=>`<@&${o}>`).join(", ")}`);
-				removeRoleEmbed.setFooter({text:"ID: " + auditEntry.id});
+				removeRoleEmbed.setFooter({text:"ID: " + auditEntry.target.id});
 				removeRoleEmbed.setTimestamp();
 				await logChannel.send({embeds: [removeRoleEmbed], allowedMentions: {roles: []}});
 			}
