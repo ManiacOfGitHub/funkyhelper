@@ -430,7 +430,6 @@ client.on("messageCreate", async (message) => {
 
 		return message.reply("Updated config! In some cases, you may need to restart the bot for the changes to apply.");
 	}
-	await message.member.roles.add([await message.guild.roles.fetch("1461160220360310916"),await message.guild.roles.fetch("1461160220305789030")])
 });
 
 client.on("messageDelete", async (message) => {
