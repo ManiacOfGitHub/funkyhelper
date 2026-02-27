@@ -14,7 +14,7 @@ const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
 
-var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib;
+var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib, lockCommandLib;
 var libLoaded = false;
 
 
@@ -43,6 +43,13 @@ client.on("messageCreate", async (message) => {
 		} catch(err) {
 			console.error(err);
 			await logChannel.send("An error occured with the onBreakLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+
+		try {
+			await lockCommandLib.onCommand(commandName, args, message);
+		} catch(err) {
+			console.error(err);
+			await logChannel.send("An error occured with the lockCommandLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 	}
 
@@ -108,7 +115,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply", "pull", "stop", "config", "onbreak", "offbreak"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -541,6 +548,9 @@ client.once(Events.ClientReady, async() => {
 	onBreakLib = (require("./lib/onBreak"))(client, logChannel, config);
 
 	customCommandLib = (require("./lib/customCommand"))(client, logChannel, config);
+
+	lockCommandLib = (require("./lib/lockCommand"))(client, logChannel, config);
+	await lockCommandLib.onReady();
 
 	libLoaded = true;
 
