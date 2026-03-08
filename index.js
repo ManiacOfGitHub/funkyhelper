@@ -275,7 +275,7 @@ client.on("messageCreate", async (message) => {
 		}
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
-		if((config.echoChannelIds.includes(channelId)) && !config.botOwners.includes(message.member.id)) {
+		if((!config.echoChannelIds.includes(channelId)) && !config.botOwners.includes(message.member.id)) {
 			await message.reply(`You cannot \`.reply\` into that channel. You can \`.reply\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
 			return;
 		}
