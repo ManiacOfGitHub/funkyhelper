@@ -1,4 +1,4 @@
-const { Client, Events, GatewayIntentBits, EmbedBuilder, AttachmentBuilder, ActivityType, AuditLogEvent } = require('discord.js');
+const { Client, Events, GatewayIntentBits, EmbedBuilder, AttachmentBuilder, ActivityType, AuditLogEvent, Attachment } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
@@ -122,7 +122,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -443,6 +443,30 @@ client.on("messageCreate", async (message) => {
 		}
 
 		return message.reply("Updated config! In some cases, you may need to restart the bot for the changes to apply.");
+	}
+
+	if(message.content.split(" ")[0].toLowerCase() == ".source") {
+		if(!havePermission(message.member)) {
+			return message.reply("You do not have permission to view the source of commands.");
+		}
+		if(args.length < 2) {
+			return message.reply("Not enough arguments.");
+		}
+		if(!fs.existsSync(`./commands/${args[1]}.botcmd`)) {
+			return message.reply("Command does not exist.");
+		}
+		var data = fs.readFileSync(`./commands/${args[1]}.botcmd`, 'utf-8');
+		if(data.length <= 2000) {
+			await message.reply({
+				content: data,
+				files: [new AttachmentBuilder(`./commands/${args[1]}.botcmd`)]
+			});
+		} else {
+			await message.reply({
+				content: "Over 2000 characters, cannot send, please view file below",
+				files: [new AttachmentBuilder(`./commands/${args[1]}.botcmd`)]
+			});
+		}
 	}
 });
 
