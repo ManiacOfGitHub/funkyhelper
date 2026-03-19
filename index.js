@@ -122,7 +122,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -466,6 +466,34 @@ client.on("messageCreate", async (message) => {
 				content: "Over 2000 characters, cannot send, please view file below",
 				files: [new AttachmentBuilder(`./commands/${args[1]}.botcmd`)]
 			});
+		}
+	}
+
+	if(message.content.split(" ")[0].toLowerCase() == ".upload") {
+		if(!havePermission(message.member)) {
+			return message.reply("You do not have permission to upload commands to the bot.");
+		}
+		if(message.attachments.size < 1) {
+			return message.reply("You must provide at least one file to upload.");
+		}
+		if(message.attachments && message.attachments.values) {
+			for(var attachment of message.attachments.values()) {
+				if(!attachment.url) {
+					await message.reply("Unable to get URL of " + attachment.name + ".");
+					continue;
+				}
+				if(!attachment.name || !attachment.name.endsWith(".botcmd")) {
+					await message.reply("Uploaded file is not a bot command.");
+					continue;
+				}
+				try {
+					let file = await fetch(attachment.url);
+					file.body.pipe(fs.createWriteStream("./commands/"+attachment.name));
+					await message.reply("Uploaded " + attachment.name);
+				} catch(err) {
+					await message.reply("Unable to upload " + attachment.name + ". Error info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+				}
+			}
 		}
 	}
 });
