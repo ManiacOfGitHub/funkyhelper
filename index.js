@@ -330,7 +330,7 @@ client.on("messageCreate", async (message) => {
 			await message.reply("This command is on cooldown. Wait " + (minutes ? minutes.toString() + " minute" + (minutes!=1 ? "s" : "") + " and " : "") + (seconds.toString() + " second" + (seconds!=1 ? "s" : "")) + " before sending again");
 		} else {
 			matchmakingTimer = 60 * 10;
-			await message.channel.send("<@&"+config.matchmakingRoleId+">");
+			await message.channel.send("<@&"+config.matchmakingRoleId+">\n**Someone would like to play!**\nIf you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.");
 		}
 	}
 
