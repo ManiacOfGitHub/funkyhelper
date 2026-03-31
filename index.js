@@ -340,6 +340,19 @@ client.on("messageCreate", async (message) => {
 		}
 		var theDumbass = message.mentions.members.first();
 		if(!theDumbass) {
+			for(var i in args) {
+				if(isNaN(Number(args[i]))) continue;
+				try {
+					let foundMember = await message.guild.members.fetch(args[i]);
+					if(foundMember) {
+						theDumbass = foundMember;
+					}
+				} catch(err) {
+					continue;
+				}
+			}
+		}
+		if(!theDumbass) {
 			return message.reply("No user provided");
 		}
 		try {
