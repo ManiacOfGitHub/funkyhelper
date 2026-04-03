@@ -6,7 +6,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const util = require('./lib/util');
 
 var config = require('./config.json');
-var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
+var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent]});
 var matchmakingTimer = 0;
 var logChannel;
 
