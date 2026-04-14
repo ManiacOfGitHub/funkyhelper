@@ -1,37 +1,54 @@
 {
-    "token": "TOKEN_GOES_HERE",
-    "logChannelId": "1461160220880408778",
-    "activeModeratorsId": "1461160220305789023",
-    "allowRoleList": ["1461160220305789030","1461160220305789023"],
-    "helperPlusRoleList": ["1461160220305789030","1461160220305789023"],
-    "staffRoleList": ["1461160220305789021", "1461160220305789026"],
-    "breakRoleList": ["1461160220305789022", "1461160220305789026"],
-    "onBreakRoleId": "1461160220360310916",
-    "switchPiracyRoleId": "1461160220079427657",
-    "switchPiracyAppealedRoleId": "1461160219995279392",
-    "stickyMessageChannels": ["1461160222302273579", "1461160222302273578", "1461160222302273584"],
-    "matchmakingRoleId": "1461160220020572260",
-    "matchmakingChannelId": "1461160222784487552",
-    "botOwners": ["366366250387111937", "1141501087191408661", "544316051827982377"],
-    "fullPermsMode": true,
-    "withdrawalScamCheckEnabled": true,
-    "extraWithdrawalScamTerms": ["caraslots"],
-    "consoleHelpChannels": {
-        "1461160222302273578": "emulator",
-        "1461160222302273579": "switch",
-        "1461160222302273580": "wiiu",
-        "1461160222302273581": "3ds",
-        "1461160222302273582": "wii",
-        "1461160222302273583": "dsi"
-    },
-    "consoleAliases": {
-        "emulator": ["emu"],
-        "switch": ["sw1", "ns", "nx"],
-        "wii": ["vwii"],
-        "dsi": ["ds", "nds"] 
-    },
-    "modChatChannelId": "1461160220880408774",
-    "echoChannelIds": ["1461160220880408775","1461160220880408776","1461160222784487550"],
-    "logMinRole": "1461160220079427656",
-    "moderatorRole": "1461160220343406760"
+  "token": "TOKEN_GOES_HERE",
+  "logChannelId": "1461160220880408778",
+  "activeModeratorsId": "1461160220305789023",
+  "allowRoleList": [
+    "1461160220305789030",
+    "1461160220305789023"
+  ],
+  "helperPlusRoleList": [
+    "1461160220305789030",
+    "1461160220305789023"
+  ],
+  "staffRoleList": [
+    "1461160220305789021",
+    "1461160220305789026"
+  ],
+  "breakRoleList": [
+    "1461160220305789022",
+    "1461160220305789026"
+  ],
+  "onBreakRoleId": "1461160220360310916",
+  "switchPiracyRoleId": "1461160220079427657",
+  "switchPiracyAppealedRoleId": "1461160219995279392",
+  "stickyMessageChannels": {
+    "1461160222302273579": ["switchPiracy"],
+    "1461160222302273578": ["switchPiracy","botCmds"],
+    "1461160222302273584": ["switchPiracy"]
+  },
+  "matchmakingRoleId": "1461160220020572260",
+  "matchmakingChannelId": "1461160222784487552",
+  "botOwners": ["366366250387111937", "1141501087191408661", "544316051827982377"],
+  "fullPermsMode": true,
+  "withdrawalScamCheckEnabled": true,
+  "extraWithdrawalScamTerms": ["caraslots"],
+  "consoleHelpChannels": {
+    "1461160222302273578": "emulator",
+    "1461160222302273579": "switch",
+    "1461160222302273580": "wiiu",
+    "1461160222302273581": "3ds",
+    "1461160222302273582": "wii",
+    "1461160222302273583": "dsi"
+  },
+  "consoleAliases": {
+    "emulator": ["emu"],
+    "switch": ["sw1", "ns", "nx"],
+    "wii": ["vwii"],
+    "dsi": ["ds", "nds"] 
+  },
+  "modChatChannelId": "1461160220880408774",
+  "botCmdsChannelId": "1461160222784487551",
+  "echoChannelIds": ["1461160220880408775","1461160220880408776","1461160222784487550"],
+  "logMinRole": "1461160220079427656",
+  "moderatorRole": "1461160220343406760"
 }
