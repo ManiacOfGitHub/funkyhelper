@@ -638,12 +638,16 @@ function havePermission(member) {
 }
 
 async function generateWikiPage(wikiCommand) {
-	if (!wikiCommand.length) return;
-	wikiCommand = wikiCommand[0].toUpperCase() + wikiCommand.slice(1).replace(/ /g, "_");
-	let response = await fetch(`https://wiki.hacks.guide/w/api.php?action=query&meta=siteinfo&siprop=general&iwurl=true&titles=${encodeURIComponent(wikiCommand.split("#")[0])}&format=json`).then(res => res.json());
-	if (response.query?.interwiki?.[0]?.url) return `<${response.query.interwiki[0].url}>`;
-	if (response.query?.normalized?.[0]?.to) wikiCommand = response.query.normalized[0].to.replace(/ /g, "_");;
-	return `<https://wiki.hacks.guide/wiki/${wikiCommand}>`;
+	try {
+		if (!wikiCommand.length) return;
+		wikiCommand = wikiCommand[0].toUpperCase() + wikiCommand.slice(1).replace(/ /g, "_");
+		let response = await fetch(`https://wiki.hacks.guide/w/api.php?action=query&meta=siteinfo&siprop=general&iwurl=true&titles=${encodeURIComponent(wikiCommand.split("#")[0])}&format=json`).then(res => res.json());
+		if (response.query?.interwiki?.[0]?.url) return `<${response.query.interwiki[0].url}>`;
+		if (response.query?.normalized?.[0]?.to) wikiCommand = response.query.normalized[0].to.replace(/ /g, "_");;
+		return `<https://wiki.hacks.guide/wiki/${wikiCommand}>`;
+	} catch(err) {
+		return "failed";
+	}
 }
 
 async function processWikiCommands(message) {
@@ -656,6 +660,10 @@ async function processWikiCommands(message) {
 		if (!wikiCommandStart.includes("]]")) return;
 		let wikiCommand = wikiCommandStart.split("]]")[0];
 		let wikiURL = await generateWikiPage(wikiCommand);
+		if (wikiURL == "failed") {
+			await message.channel.send("Failed to get wiki links, the wiki is likely down.");
+			return;
+		}
 		if (!wikiURL) return;
 		botMessage += (botMessage ? ", " : "") + wikiURL;
 		currentMessageContent = wikiCommandStart.split("]]").slice(1).join("]]");
