@@ -50,5 +50,8 @@
   "botCmdsChannelId": "1461160222784487551",
   "echoChannelIds": ["1461160220880408775","1461160220880408776","1461160222784487550"],
   "logMinRole": "1461160220079427656",
-  "moderatorRole": "1461160220343406760"
+  "moderatorRole": "1461160220343406760",
+  "birthdayRoleId": "1461160220079427663",
+  "staffHangoutChannelId": "1461160220880408776",
+  "birthdayAnnouncementChannelId": "1461160222784487550"
 }
