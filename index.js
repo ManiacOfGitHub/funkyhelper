@@ -129,7 +129,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "say", "reply", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -243,9 +243,16 @@ client.on("messageCreate", async (message) => {
 	// Check for keyword matches in the message
 	await processKeywords(message);
 
-	if([".say",'.echo'].includes(message.content.split(" ")[0].toLowerCase())) {
-		if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
-			return message.reply("no");
+	if([".say",'.echo','.saybypass','.echobypass'].includes(message.content.split(" ")[0].toLowerCase())) {
+		var bypassMode = commandName.endsWith("bypass");
+		if(bypassMode) {
+			if(!config.botOwners.includes(message.member.id)) {
+				return message.reply("no");
+			}
+		} else {
+			if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
+				return message.reply("no");
+			}
 		}
 		if(args.length < 3) {
 			await message.reply("Not enough arguments");
@@ -267,7 +274,11 @@ client.on("messageCreate", async (message) => {
 			return;
 		}
 		try {
-			await channel.send(args.slice(2).join(" "));
+			if(bypassMode) {
+				await channel.send({content:args.slice(2).join(" "),allowedMentions:{parse:['roles','users','everyone']}});
+			} else {
+				await channel.send(args.slice(2).join(" "));
+			}
 		} catch(err) {
 			console.error(err);
 			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
@@ -279,9 +290,16 @@ client.on("messageCreate", async (message) => {
 		}
 	}
 
-	if(message.content.split(" ")[0].toLowerCase() == ".reply") {
-		if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
-			return message.reply("no");
+	if([".reply",'.replybypass'].includes(message.content.split(" ")[0].toLowerCase())) {
+		var bypassMode = commandName.endsWith("bypass");
+		if(bypassMode) {
+			if(!config.botOwners.includes(message.member.id)) {
+				return message.reply("no");
+			}
+		} else {
+			if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
+				return message.reply("no");
+			}
 		}
 		if(args.length < 4) {
 			await message.reply("Not enough arguments");
@@ -314,7 +332,11 @@ client.on("messageCreate", async (message) => {
 			return;
 		}
 		try {
-			await messageToReplyTo.reply(args.slice(3).join(" "), {allowedMentions:{repliedUser: false}});
+			if(bypassMode) {
+				await messageToReplyTo.reply({content:args.slice(3).join(" "),allowedMentions:{parse:['roles','users','everyone'],repliedUser:true}});
+			} else {
+				await messageToReplyTo.reply({content:args.slice(3).join(" "),allowedMentions:{repliedUser: false}});
+			}
 		} catch(err) {
 			console.error(err);
 			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
