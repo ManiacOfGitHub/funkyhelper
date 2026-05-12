@@ -246,7 +246,7 @@ client.on("messageCreate", async (message) => {
 	if([".say",'.echo','.saybypass','.echobypass'].includes(message.content.split(" ")[0].toLowerCase())) {
 		var bypassMode = commandName.endsWith("bypass");
 		if(bypassMode) {
-			if(!config.botOwners.includes(message.member.id)) {
+			if(!message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
 				return message.reply("no");
 			}
 		} else {
@@ -260,7 +260,7 @@ client.on("messageCreate", async (message) => {
 		}
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
-		if((!config.echoChannelIds.includes(channelId)) && !config.botOwners.includes(message.member.id)) {
+		if((!config.echoChannelIds.includes(channelId)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
 			await message.reply(`You cannot \`.${commandName}\` into that channel. You can \`.${commandName}\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
 			return;
 		}
@@ -293,7 +293,7 @@ client.on("messageCreate", async (message) => {
 	if([".reply",'.replybypass'].includes(message.content.split(" ")[0].toLowerCase())) {
 		var bypassMode = commandName.endsWith("bypass");
 		if(bypassMode) {
-			if(!config.botOwners.includes(message.member.id)) {
+			if(!message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
 				return message.reply("no");
 			}
 		} else {
@@ -307,7 +307,7 @@ client.on("messageCreate", async (message) => {
 		}
 		var channel;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
-		if((!config.echoChannelIds.includes(channelId)) && !config.botOwners.includes(message.member.id)) {
+		if((!config.echoChannelIds.includes(channelId)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
 			await message.reply(`You cannot \`.reply\` into that channel. You can \`.reply\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
 			return;
 		}
