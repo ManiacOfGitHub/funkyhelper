@@ -364,74 +364,7 @@ client.on("messageCreate", async (message) => {
 	}
 
 	if([".switchpiracy",".sp"].includes(message.content.split(" ")[0].toLowerCase())) {
-		if (!message.member.roles.cache.some(role => config.helperPlusRoleList.includes(role.id))) {
-			return message.reply("no");
-		}
-		var theDumbass = message.mentions.members.first();
-		if(!theDumbass) {
-			for(var i in args) {
-				if(isNaN(Number(args[i]))) continue;
-				try {
-					let foundMember = await message.guild.members.fetch(args[i]);
-					if(foundMember) {
-						theDumbass = foundMember;
-					}
-				} catch(err) {
-					continue;
-				}
-			}
-		}
-		if(!theDumbass) {
-			return message.reply("No user provided");
-		}
-		try {
-			var switchPiracyRole = await message.guild.roles.fetch(config.switchPiracyRoleId);
-		} catch(err) {
-			if(err.message) logChannel.send(err.message);
-			return message.reply("Failed to get the Switch Piracy Watchlist role.");
-		}
-
-		try {
-			var switchPiracyAppealedRole = await message.guild.roles.fetch(config.switchPiracyAppealedRoleId);
-		} catch(err) {
-			if(err.message) logChannel.send(err.message);
-			return message.reply("Failed to get the Switch Piracy Appealed role.");
-		}
-		let fulldelPhrases = ["fulldelete", "fullremove", "fulldel"];
-		let delPhrases = ["delete","remove","del",...fulldelPhrases];
-		var removeMode = args.length > 1 && delPhrases.includes(args[1].toLowerCase());
-		var fullRemoveMode = args.length > 1 && fulldelPhrases.includes(args[1].toLowerCase());
-		try {
-			if(removeMode) {
-				await theDumbass.roles.remove(switchPiracyRole, "Removed by FunkyHelper");	
-			} else {
-				await theDumbass.roles.add(switchPiracyRole, "Added by FunkyHelper");
-			}
-		} catch(err) {
-			if(err.message) logChannel.send(err.message);
-			return message.reply(`Failed to ${removeMode?"remove role from":"add role to"} user. (Switch Piracy Watchlist)`);
-		}
-		if(removeMode) {
-			try {
-				if(fullRemoveMode) {
-					await theDumbass.roles.remove(switchPiracyAppealedRole, "Removed by FunkyHelper")
-				} else {
-					await theDumbass.roles.add(switchPiracyAppealedRole, "Added by FunkyHelper")
-				}
-			} catch(err) {
-				if(err.message) logChannel.send(err.message);
-				return message.reply(`Failed to ${fullRemoveMode?"remove role from":"add role to"} user. (Switch Piracy Appealed)`);
-			}
-		}
-		let replyMsg = `${theDumbass.toString()} has been ${removeMode?"**removed from**":"**added to**"} the Switch Piracy Watchlist.`;
-		if(removeMode) {
-			replyMsg += ` They now ${fullRemoveMode ? "**do not have**" : "**have**"} the Switch Piracy Appealed role.`;
-		} else {
-			if(theDumbass.roles.cache.some(role => config.switchPiracyAppealedRoleId.includes(role.id))) {
-				replyMsg += "\n**Notice!** This user is a repeat offender. This is usually grounds for a ban.";
-			}
-		}
-		return message.reply(replyMsg);
+		return await message.channel.send("The Switch Piracy Watchlist is no more!\nIf you are staff, please refer to this message for more information: https://discord.com/channels/1041089944673853490/1413260588280451072/1503548955911389264.\n-# This is a temporary message and will be deleted eventually.");
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".pull") {
