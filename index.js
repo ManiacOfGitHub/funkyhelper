@@ -14,7 +14,7 @@ const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
 
-var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib, lockCommandLib, addConsoleLib, birthdayLib;
+var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib, lockCommandLib, addConsoleLib, birthdayLib, addPropLib;
 var libLoaded = false;
 
 
@@ -64,6 +64,13 @@ client.on("messageCreate", async (message) => {
 		} catch(err) {
 			console.error(err);
 			await logChannel.send("An error occured with the birthdayLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+
+		try {
+			await addPropLib.onCommand(commandName, args, message);
+		} catch(err) {
+			console.error(err);
+			await logChannel.send("An error occured with the addPropLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
 		}
 	}
 
@@ -129,7 +136,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake", "addprop", "removeprop", "delprop"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -581,7 +588,7 @@ client.once(Events.ClientReady, async() => {
 
 	onBreakLib = (require("./lib/onBreak"))(client, logChannel, config);
 
-	customCommandLib = (require("./lib/customCommand"))(client, logChannel, config);
+	customCommandLib = (require("./lib/customCommand"))(client, logChannel, config, havePermission);
 
 	lockCommandLib = (require("./lib/lockCommand"))(client, logChannel, config);
 	await lockCommandLib.onReady();
@@ -590,6 +597,8 @@ client.once(Events.ClientReady, async() => {
 
 	birthdayLib = (require("./lib/birthday"))(client, logChannel, config);
 	await birthdayLib.onReady();
+
+	addPropLib = (require("./lib/addProp"))(client, logChannel, config, havePermission);
 
 	libLoaded = true;
 
