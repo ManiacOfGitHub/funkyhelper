@@ -14,7 +14,7 @@ const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
 
-var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib, lockCommandLib, addConsoleLib, birthdayLib, addPropLib;
+var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib, lockCommandLib, addConsoleLib, birthdayLib, addPropLib, modLib;
 var libLoaded = false;
 
 
@@ -28,7 +28,7 @@ client.on("messageCreate", async (message) => {
 			await withdrawalScamLib.onMessage(message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occured with the withdrawalScam library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannel.send("An error occurred with the withdrawalScam library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 			await withdrawalScamLib.liftLock();
 		}
 	})();
@@ -42,35 +42,42 @@ client.on("messageCreate", async (message) => {
 			await onBreakLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occured with the onBreakLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannel.send("An error occurred with the onBreakLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 
 		try {
 			await lockCommandLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occured with the lockCommandLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannel.send("An error occurred with the lockCommandLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 		
 		try {
 			await addConsoleLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occured with the addConsoleLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
+			await logChannel.send("An error occurred with the addConsoleLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
 		}
 
 		try {
 			await birthdayLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occured with the birthdayLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannel.send("An error occurred with the birthdayLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 
 		try {
 			await addPropLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occured with the addPropLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
+			await logChannel.send("An error occurred with the addPropLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
+		}
+
+		try {
+			await modLib.onCommand(commandName, args, message);
+		} catch(err) {
+			console.error(err);
+			await logChannel.send("An error occurred with modLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 	}
 
@@ -183,7 +190,7 @@ client.on("messageCreate", async (message) => {
 			await customCommandLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occured with a custom commands. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannel.send("An error occurred with a custom commands. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 	}
 
@@ -599,6 +606,8 @@ client.once(Events.ClientReady, async() => {
 	await birthdayLib.onReady();
 
 	addPropLib = (require("./lib/addProp"))(client, logChannel, config, havePermission);
+
+	modLib = (require("./lib/mod"))(client, logChannel, config, havePermission);
 
 	libLoaded = true;
 
