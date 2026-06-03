@@ -54,5 +54,24 @@
   "birthdayRoleId": "1461160220079427663",
   "staffHangoutChannelId": "1461160220880408776",
   "birthdayAnnouncementChannelId": "1461160222784487550",
-  "noHelpCommandChannelList": ["1461160222784487550","1461160222784487552","1461160222784487553"]
+  "noHelpCommandChannelList": ["1461160222784487550","1461160222784487552","1461160222784487553"],
+  "funnyOptions": [
+    " has disintegrated.",
+    "'s been gone.",
+    " should've been more funky.",
+    " forgot to pay their taxes.",
+    " couldn't figure out 1 + 1 and left to search for the answer.",
+    " fell into the ocean and drowned.",
+    " walked the plank.",
+    " hacked someone's Steam account and Valve handled them.",
+    "'s been donated for nuclear research.",
+    " was given the blue pill and can't continue going forward in this server.",
+    "'s joined Team Rocket, and is now blasting off again.",
+    " didn't stick the landing.",
+    " felt the wrath of Darth Vader.",
+    " was moved to a SanDian SD card.",
+    " downloaded more RAM.",
+    " was morphed into a New 2DS XL and was opened for repair.",
+    " had their name written on the Death Note book."
+  ]
 }
