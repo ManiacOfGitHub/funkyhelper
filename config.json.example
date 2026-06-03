@@ -54,8 +54,8 @@
   "birthdayRoleId": "1461160220079427663",
   "staffHangoutChannelId": "1461160220880408776",
   "birthdayAnnouncementChannelId": "1461160222784487550",
-  "noHelpCommandChannelList": ["1461160222784487550","1461160222784487552","1461160222784487553"]
-    "funnyOptions": [
+  "noHelpCommandChannelList": ["1461160222784487550","1461160222784487552","1461160222784487553"],
+  "funnyOptions": [
     " has disintegrated.",
     "'s been gone.",
     " should've been more funky.",
