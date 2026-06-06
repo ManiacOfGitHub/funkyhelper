@@ -1,5 +1,4 @@
-function log() {
-
+async function log(logChannel, ...args) {
 }
 
 function hasRole(member, roles) {

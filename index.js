@@ -3,12 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-const util = require('./lib/util');
+const util = require('./util');
 
 var config = require('./config.json');
 var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
 var matchmakingTimer = 0;
-var logChannel;
+var logChannels = {normal: null, important: null};
 
 const commandsDir = path.join(__dirname, 'commands');
 const keywordsDir = path.join(__dirname, 'keywords');
@@ -28,7 +28,7 @@ client.on("messageCreate", async (message) => {
 			await withdrawalScamLib.onMessage(message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occurred with the withdrawalScam library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("An error occurred with the withdrawalScam library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 			await withdrawalScamLib.liftLock();
 		}
 	})();
@@ -42,42 +42,42 @@ client.on("messageCreate", async (message) => {
 			await onBreakLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occurred with the onBreakLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("An error occurred with the onBreakLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 
 		try {
 			await lockCommandLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occurred with the lockCommandLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("An error occurred with the lockCommandLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 		
 		try {
 			await addConsoleLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occurred with the addConsoleLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
+			await logChannels.important.send("An error occurred with the addConsoleLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
 		}
 
 		try {
 			await birthdayLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occurred with the birthdayLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("An error occurred with the birthdayLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 
 		try {
 			await addPropLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occurred with the addPropLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
+			await logChannels.important.send("An error occurred with the addPropLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
 		}
 
 		try {
 			await modLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occurred with modLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("An error occurred with modLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 	}
 
@@ -98,9 +98,10 @@ client.on("messageCreate", async (message) => {
 			return message.reply("Invalid alias path.");
 		}
 		const ogCommand = args[1].toLowerCase();
-		fs.writeFile(filePath, ogCommand, (err) => {
+		fs.writeFile(filePath, ogCommand, async(err) => {
 			if (err) return message.reply("Error saving alias.");
-			message.reply(`Alias \`${aliasName}\` for \`${ogCommand}\` created!`);
+			await message.reply(`Alias \`${aliasName}\` for \`${ogCommand}\` created!`);
+			await logChannels.important.send({content:`Alias \`.${aliasName}\` for \`.${ogCommand}\` created by ${message.member}`,allowedMentions:{parse:[]}});
 		});
 		return;
 	}
@@ -118,9 +119,10 @@ client.on("messageCreate", async (message) => {
 		if (!filePath.startsWith(aliasDir)) {
 			return message.reply("Invalid alias path.");
 		}
-		fs.unlink(filePath, (err) => {
+		fs.unlink(filePath, async(err) => {
 			if (err) return message.reply(`Alias \`${aliasName}\` does not exist.`);
-			message.reply(`Alias \`${aliasName}\` deleted!`);
+			await message.reply(`Alias \`${aliasName}\` deleted!`);
+			await logChannels.important.send({content:`Alias \`.${aliasName}\` deleted by ${message.member}`,allowedMentions:{parse:[]}});
 		});
 		return;
 	}
@@ -143,7 +145,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake", "addprop", "removeprop", "delprop", "ban", "yeet", "scamkick"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake", "addprop", "removeprop", "delprop", "ban", "yeet", "scamkick"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -152,9 +154,10 @@ client.on("messageCreate", async (message) => {
 			return message.reply("Invalid command path.");
 		}
 		const commandContent = args.slice(2).join(" ");
-		fs.writeFile(`./commands/${commandName}.botcmd`, commandContent, (err) => {
+		fs.writeFile(`./commands/${commandName}.botcmd`, commandContent, async(err) => {
 			if (err) return message.reply("Error saving command.");
-			message.reply(`Command \`.${commandName}\` created!`);
+			await message.reply(`Command \`.${commandName}\` created!`);
+			await logChannels.important.send({content:`Command \`.${commandName}\` created by ${message.member}`,allowedMentions:{parse:[]}, files: [new AttachmentBuilder(`./commands/${commandName}.botcmd`)]});
 		});
 	}
 
@@ -171,9 +174,10 @@ client.on("messageCreate", async (message) => {
 		if (!filePath.startsWith(commandsDir)) {
 			return message.reply("Invalid command path.");
 		}
-		fs.unlink(`./commands/${commandName}.botcmd`, (err) => {
+		fs.unlink(`./commands/${commandName}.botcmd`, async(err) => {
 			if (err) return message.reply(`Command ${commandName} does not exist.`);
-			message.reply(`Command \`.${commandName}\` deleted!`);
+			await message.reply(`Command \`.${commandName}\` deleted!`);
+			await logChannels.important.send({content:`Command \`.${commandName}\` deleted by ${message.member}`,allowedMentions:{parse:[]}});
 		});
 	}
 
@@ -190,7 +194,7 @@ client.on("messageCreate", async (message) => {
 			await customCommandLib.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
-			await logChannel.send("An error occurred with a custom commands. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("An error occurred with a custom command. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 	}
 
@@ -216,9 +220,10 @@ client.on("messageCreate", async (message) => {
 			return message.reply("Invalid keyword path.");
 		}
 		const keywordContent = args.slice(2).join(" ");
-		fs.writeFile(filePath, keywordContent, (err) => {
+		fs.writeFile(filePath, keywordContent, async(err) => {
 			if (err) return message.reply("Error saving keyword.");
-			message.reply(`Keyword \`${keywordName}\` created!`);
+			await message.reply(`Keyword \`${keywordName}\` created!`);
+			await logChannels.important.send({content:`Keyword \`${keywordName}\` created by ${message.member}`,allowedMentions:{parse:[]}, files: [new AttachmentBuilder(`./keywords/${keywordName}.botkw`)]});
 		});
 		return;
 	}
@@ -236,9 +241,10 @@ client.on("messageCreate", async (message) => {
 		if (!filePath.startsWith(keywordsDir)) {
 			return message.reply("Invalid keyword path.");
 		}
-		fs.unlink(filePath, (err) => {
+		fs.unlink(filePath, async(err) => {
 			if (err) return message.reply(`Keyword \`${keywordName}\` does not exist.`);
-			message.reply(`Keyword \`${keywordName}\` deleted!`);
+			await message.reply(`Keyword \`${keywordName}\` deleted!`);
+			await logChannels.important.send({content:`Keyword \`${keywordName}\` deleted by ${message.member}`,allowedMentions:{parse:[]}});
 		});
 		return;
 	}
@@ -289,10 +295,17 @@ client.on("messageCreate", async (message) => {
 		}
 		try {
 			if(bypassMode) {
-				await channel.send({content:args.slice(2).join(" "),allowedMentions:{parse:['roles','users','everyone']}});
+				var sentMessage = await channel.send({content:args.slice(2).join(" "),allowedMentions:{parse:['roles','users','everyone']}});
 			} else {
-				await channel.send(args.slice(2).join(" "));
+				var sentMessage = await channel.send(args.slice(2).join(" "));
 			}
+			let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${commandName} was used to send a message`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Sent [a message](${sentMessage.url}) in <#${channelId}>:\n${args.slice(2).join(" ")}`);
+			logEmbed.setFooter({text:"ID: " + sentMessage.id});
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
 		} catch(err) {
 			console.error(err);
 			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
@@ -347,13 +360,90 @@ client.on("messageCreate", async (message) => {
 		}
 		try {
 			if(bypassMode) {
-				await messageToReplyTo.reply({content:args.slice(3).join(" "),allowedMentions:{parse:['roles','users','everyone'],repliedUser:true}});
+				var sentMessage = await messageToReplyTo.reply({content:args.slice(3).join(" "),allowedMentions:{parse:['roles','users','everyone'],repliedUser:true}});
 			} else {
-				await messageToReplyTo.reply({content:args.slice(3).join(" "),allowedMentions:{repliedUser: false}});
+				var sentMessage = await messageToReplyTo.reply({content:args.slice(3).join(" "),allowedMentions:{repliedUser: false}});
 			}
+			let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${commandName} was used to reply to a message`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Sent [a reply](${sentMessage.url}) to [a message](${(await sentMessage.fetchReference()).url}) in <#${channelId}>:\n${args.slice(3).join(" ")}`);
+			logEmbed.setFooter({text:"ID: " + sentMessage.id});
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds:[logEmbed],allowedMentions:{parse:[]}});
 		} catch(err) {
 			console.error(err);
 			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+		try {
+			await message.delete();
+		} catch(err) {
+			//I really don't care enough to do anything with this.
+		}
+	}
+
+	if([".edit",'.editbypass'].includes(message.content.split(" ")[0].toLowerCase())) {
+		var bypassMode = commandName.endsWith("bypass");
+		if(bypassMode) {
+			if(!message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
+				return message.reply("no");
+			}
+		} else {
+			if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
+				return message.reply("no");
+			}
+		}
+		if(args.length < 4) {
+			await message.reply("Not enough arguments");
+			return;
+		}
+		var channel;
+		let channelId = args[1].matchAll(/\d/g).toArray().join("");
+		if((!config.echoChannelIds.includes(channelId)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
+			await message.reply(`You cannot \`.edit\` messages in that channel. You can \`.edit\` messages in : ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
+			return;
+		}
+		if(channelId) {
+			try {
+				channel = await message.guild.channels.fetch(channelId);
+			} catch(err) {}
+		};
+		if(!channel) {
+			await message.reply("Valid channel was not provided.");
+			return;
+		};
+		let messageToEdit;
+		let messageId = args[2].matchAll(/\d/g).toArray().join("");
+		if(messageId) {
+			try {
+				messageToEdit = await channel.messages.fetch(messageId);
+			} catch(err) {};
+		}
+		if(!messageToEdit) {
+			await message.reply("Message not found.");
+			return;
+		}
+		if(messageToEdit.author.id != client.user.id) {
+			await message.reply("Message was not sent by bot.");
+			return;
+		}
+		let oldContent = messageToEdit.content;
+		try {
+			if(bypassMode) {
+				await messageToEdit.edit({content:args.slice(3).join(" "),allowedMentions:{parse:['roles','users','everyone'],repliedUser:true}});
+			} else {
+				await messageToEdit.edit({content:args.slice(3).join(" "),allowedMentions:{parse: ['users'], repliedUser: false}});
+			}
+			let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${commandName} was used to edit a message`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Edited [a message](${messageToEdit.url}) in <#${channelId}>:\n**Old Content:** ${oldContent}\n**New Content:** ${args.slice(3).join(" ")}`);
+			logEmbed.setFooter({text:"ID: " + messageToEdit.id});
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds:[logEmbed],allowedMentions:{parse:[]}});
+		} catch(err) {
+			console.error(err);
+			await message.reply("Failed to edit message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 		try {
 			await message.delete();
@@ -479,6 +569,7 @@ client.on("messageCreate", async (message) => {
 					let file = await fetch(attachment.url);
 					file.body.pipe(fs.createWriteStream("./commands/"+attachment.name));
 					await message.reply("Uploaded " + attachment.name);
+					await logChannels.important.send({content:`Command \`.${attachment.name.split(".botcmd").slice(0,-1).join(".botcmd")}\` uploaded by ${message.member}`,allowedMentions:{parse:[]}, files: [new AttachmentBuilder(`./commands/${attachment.name}`)]});
 				} catch(err) {
 					await message.reply("Unable to upload " + attachment.name + ". Error info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 				}
@@ -488,9 +579,9 @@ client.on("messageCreate", async (message) => {
 });
 
 client.on("messageDelete", async (message) => {
+	if(!logChannels) return;
 	if (message.author.bot) return;
 	if (message.attachments.size > 0) {
-		var logChannel = await client.channels.fetch(config.logChannelId);
 		var messageText = `A message from ${message.author} has been deleted in ${message.channel} with ${message.attachments.size} attachment${message.attachments.size > 1 ? "s" : ""}.`;
 		let files = [];
 		if (message.attachments && message.attachments.values) {
@@ -509,13 +600,13 @@ client.on("messageDelete", async (message) => {
 		} else {
 			messageText += "\nCould not save the attachments."
 		}
-		await logChannel.send({ content: messageText, flags: [4096], files });
+		await logChannels.normal.send({ content: messageText, flags: [4096], files });
 	}
 });
 
 client.on("guildAuditLogEntryCreate", async(auditEntry, guild)=>{
 	try {
-		if(!logChannel) return;
+		if(!logChannels) return;
 		if(auditEntry.action !== AuditLogEvent.MemberRoleUpdate) return;
 		let minRolePosition = (await guild.roles.fetch(config.logMinRole)).position;
 		for(var change of auditEntry.changes) {
@@ -534,7 +625,7 @@ client.on("guildAuditLogEntryCreate", async(auditEntry, guild)=>{
 				addRoleEmbed.setDescription(`${roleIds.map(o=>`<@&${o}>`).join(", ")}`);
 				addRoleEmbed.setFooter({text:"ID: " + auditEntry.target.id});
 				addRoleEmbed.setTimestamp();
-				await logChannel.send({embeds: [addRoleEmbed], allowedMentions: {roles: []}});
+				await logChannels.normal.send({embeds: [addRoleEmbed], allowedMentions: {roles: []}});
 			}
 			if(change.key=="$remove") {
 				let removeRoleEmbed = new EmbedBuilder();
@@ -543,13 +634,13 @@ client.on("guildAuditLogEntryCreate", async(auditEntry, guild)=>{
 				removeRoleEmbed.setDescription(`${roleIds.map(o=>`<@&${o}>`).join(", ")}`);
 				removeRoleEmbed.setFooter({text:"ID: " + auditEntry.target.id});
 				removeRoleEmbed.setTimestamp();
-				await logChannel.send({embeds: [removeRoleEmbed], allowedMentions: {roles: []}});
+				await logChannels.normal.send({embeds: [removeRoleEmbed], allowedMentions: {roles: []}});
 			}
 		}
 	} catch(err) {
 		console.error(err);
 		try {
-			await logChannel.send("Failed to process audit log entry creation\nError info: " + (err?(err.message??"syke lmao"):"syke lmao")) 
+			await logChannels.important.send("Failed to process audit log entry creation\nError info: " + (err?(err.message??"syke lmao"):"syke lmao")) 
 		} catch(err) {}
 	}
 })
@@ -563,14 +654,14 @@ client.once(Events.ClientReady, async() => {
 		}],
 		status: "online"
 	});
-
+	logChannels.normal = await client.channels.fetch(config.logChannelId);
+	logChannels.important = await client.channels.fetch(config.importantLogChannelId);
 	try {
-		logChannel = await client.channels.fetch(config.logChannelId);
 		let embed = new EmbedBuilder();
 		embed.setTitle("FunkyHelper is online!");
 		embed.setDescription("The bot has just started. If this happens several times within a few minutes, the bot may be crashing. Please notify a Bot Maintainer if so.");
 		embed.setColor("Aqua");
-		await logChannel.send({embeds:[embed]});
+		await logChannels.important.send({embeds:[embed]});
 	} catch(err) {
 		console.log("Failed to send startup message.\n"+err);
 	}
@@ -587,27 +678,27 @@ client.once(Events.ClientReady, async() => {
 		fs.mkdirSync(aliasDir, { recursive: true });
 	}
 
-	stickyMessageLib = (require("./lib/stickyMessages"))(client, logChannel, config);
+	stickyMessageLib = (require("./lib/stickyMessages"))(client, logChannels, config);
 	await stickyMessageLib.onReady();
 
-	withdrawalScamLib = (require("./lib/withdrawalScam"))(client, logChannel, config);
+	withdrawalScamLib = (require("./lib/withdrawalScam"))(client, logChannels, config);
 	await withdrawalScamLib.onReady();
 
-	onBreakLib = (require("./lib/onBreak"))(client, logChannel, config);
+	onBreakLib = (require("./lib/onBreak"))(client, logChannels, config);
 
-	customCommandLib = (require("./lib/customCommand"))(client, logChannel, config, havePermission);
+	customCommandLib = (require("./lib/customCommand"))(client, logChannels, config, havePermission);
 
-	lockCommandLib = (require("./lib/lockCommand"))(client, logChannel, config);
+	lockCommandLib = (require("./lib/lockCommand"))(client, logChannels, config);
 	await lockCommandLib.onReady();
 
-	addConsoleLib = (require("./lib/addConsole"))(client, logChannel, config, havePermission);
+	addConsoleLib = (require("./lib/addConsole"))(client, logChannels, config, havePermission);
 
-	birthdayLib = (require("./lib/birthday"))(client, logChannel, config);
+	birthdayLib = (require("./lib/birthday"))(client, logChannels, config);
 	await birthdayLib.onReady();
 
-	addPropLib = (require("./lib/addProp"))(client, logChannel, config, havePermission);
+	addPropLib = (require("./lib/addProp"))(client, logChannels, config, havePermission);
 
-	modLib = (require("./lib/mod"))(client, logChannel, config, havePermission);
+	modLib = (require("./lib/mod"))(client, logChannels, config, havePermission);
 
 	libLoaded = true;
 

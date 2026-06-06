@@ -1,6 +1,7 @@
 {
   "token": "TOKEN_GOES_HERE",
   "logChannelId": "1461160220880408778",
+  "importantLogChannelId": "1461160220880408777",
   "activeModeratorsId": "1461160220305789023",
   "allowRoleList": [
     "1461160220305789030",
