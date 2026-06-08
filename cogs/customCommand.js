@@ -2,7 +2,7 @@ var fs = require('fs');
 var util = require("../util");
 var {EmbedBuilder} = require("discord.js");
 
-module.exports = (client, logChannels, config, havePermission) => {
+module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(commandName, args, message) {
         if (message.content.startsWith(".") && fs.existsSync(`./alias/${commandName}.alias`)) {
             try {

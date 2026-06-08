@@ -1,7 +1,7 @@
 var {EmbedBuilder} = require("discord.js");
 var util = require('../util');
 
-module.exports = (client, logChannels, config, havePermission) => {
+module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(command, args, message) {
         if(!["ban","yeet","scamkick"].includes(command)) return;
         if(!config.fullPermsMode) {

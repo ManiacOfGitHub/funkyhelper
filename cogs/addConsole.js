@@ -1,9 +1,9 @@
 var fs = require('fs');
 
-module.exports = (client, logChannels, config, havePermission) => {
+module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(command, args, message) {
         if(!(["addconsole", "removeconsole", "delconsole"].includes(command))) return;
-        if(!havePermission(message.member)) {
+        if(!clientState.havePermission(message.member)) {
             await message.reply("You do not have permission to edit commands.");
             return;
         }

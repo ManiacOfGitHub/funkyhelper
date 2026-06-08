@@ -6,6 +6,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const util = require('./util');
 
 var config = require('./config.json');
+const { log } = require('console');
 var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
 var matchmakingTimer = 0;
 var logChannels = {normal: null, important: null};
@@ -13,22 +14,27 @@ var logChannels = {normal: null, important: null};
 const commandsDir = path.join(__dirname, 'commands');
 const aliasDir = path.join(__dirname, "alias");
 
-var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib, lockCommandLib, addConsoleLib, birthdayLib, addPropLib, modLib;
-var libLoaded = false;
-
+var cogs = {};
+var cogsLoaded = false;
+var clientState = {};
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
-	if(!libLoaded) return;
-	await stickyMessageLib.onMessage(message);
+	if(!cogsLoaded) {
+		if(message.content.startsWith(".")) {
+			await message.reply("Please wait before sending any commands, the bot is currently restarting...");
+		}
+		return;
+	}
+	await cogs.stickyMessages.onMessage(message);
 
 	(async()=>{
 		try {
-			await withdrawalScamLib.onMessage(message);
+			await cogs.withdrawalScam.onMessage(message);
 		} catch(err) {
 			console.error(err);
-			await logChannels.important.send("An error occurred with the withdrawalScam library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-			await withdrawalScamLib.liftLock();
+			await logChannels.important.send("An error occurred with the withdrawalScam cog. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await cogs.withdrawalScam.liftLock();
 		}
 	})();
 
@@ -37,46 +43,15 @@ client.on("messageCreate", async (message) => {
 	await processWikiCommands(message);
 
 	if(message.content.startsWith(".")) {
-		try {
-			await onBreakLib.onCommand(commandName, args, message);
-		} catch(err) {
-			console.error(err);
-			await logChannels.important.send("An error occurred with the onBreakLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-		}
-
-		try {
-			await lockCommandLib.onCommand(commandName, args, message);
-		} catch(err) {
-			console.error(err);
-			await logChannels.important.send("An error occurred with the lockCommandLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-		}
-		
-		try {
-			await addConsoleLib.onCommand(commandName, args, message);
-		} catch(err) {
-			console.error(err);
-			await logChannels.important.send("An error occurred with the addConsoleLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
-		}
-
-		try {
-			await birthdayLib.onCommand(commandName, args, message);
-		} catch(err) {
-			console.error(err);
-			await logChannels.important.send("An error occurred with the birthdayLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-		}
-
-		try {
-			await addPropLib.onCommand(commandName, args, message);
-		} catch(err) {
-			console.error(err);
-			await logChannels.important.send("An error occurred with the addPropLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"))
-		}
-
-		try {
-			await modLib.onCommand(commandName, args, message);
-		} catch(err) {
-			console.error(err);
-			await logChannels.important.send("An error occurred with modLib library. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		for(let cogName in cogs) {
+			if(cogs[cogName].hasOwnProperty('onCommand')) {
+				try {
+					await cogs[cogName].onCommand(commandName, args, message);
+				} catch(err) {
+					console.error(err);
+					await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+				}
+			}
 		}
 	}
 
@@ -190,7 +165,7 @@ client.on("messageCreate", async (message) => {
 
 	if(message.content.startsWith(".")) {
 		try {
-			await customCommandLib.onCommand(commandName, args, message);
+			await cogs.customCommand.onCommand(commandName, args, message);
 		} catch(err) {
 			console.error(err);
 			await logChannels.important.send("An error occurred with a custom command. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
@@ -613,29 +588,22 @@ client.once(Events.ClientReady, async() => {
 		fs.mkdirSync(aliasDir, { recursive: true });
 	}
 
-	stickyMessageLib = (require("./lib/stickyMessages"))(client, logChannels, config);
-	await stickyMessageLib.onReady();
+	clientState.havePermission = havePermission;
 
-	withdrawalScamLib = (require("./lib/withdrawalScam"))(client, logChannels, config);
-	await withdrawalScamLib.onReady();
+	fs.readdirSync(path.join(__dirname, 'cogs')).forEach(file=>{
+		if(file.endsWith(".js")) {
+			var cogName = path.basename(file, '.js');
+			cogs[cogName] = (require(path.join(__dirname, 'cogs', cogName)))(client, logChannels, config, clientState);
+		}
+	});
 
-	onBreakLib = (require("./lib/onBreak"))(client, logChannels, config);
+	for(let cogName in cogs) {
+		if(cogs[cogName].hasOwnProperty("onReady")) {
+			await cogs[cogName].onReady();
+		}
+	}
 
-	customCommandLib = (require("./lib/customCommand"))(client, logChannels, config, havePermission);
-
-	lockCommandLib = (require("./lib/lockCommand"))(client, logChannels, config);
-	await lockCommandLib.onReady();
-
-	addConsoleLib = (require("./lib/addConsole"))(client, logChannels, config, havePermission);
-
-	birthdayLib = (require("./lib/birthday"))(client, logChannels, config);
-	await birthdayLib.onReady();
-
-	addPropLib = (require("./lib/addProp"))(client, logChannels, config, havePermission);
-
-	modLib = (require("./lib/mod"))(client, logChannels, config, havePermission);
-
-	libLoaded = true;
+	cogsLoaded = true;
 
 	setInterval(processTimers, 1000);
 });
@@ -689,7 +657,7 @@ async function processWikiCommands(message) {
 
 
 async function processTimers() {
-	await stickyMessageLib.processTimers();
+	await cogs.stickyMessages.processTimers();
 	if(matchmakingTimer > 0) {
 		matchmakingTimer--;
 	}

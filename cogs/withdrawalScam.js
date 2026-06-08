@@ -1,5 +1,5 @@
 /*
-This library detects a common scam posted by bots on hijacked Discord accounts with 4 images and the "Withdrawal Success!" message on the last 2 images.
+This cog detects a common scam posted by bots on hijacked Discord accounts with 4 images and the "Withdrawal Success!" message on the last 2 images.
 */
 
 var {EmbedBuilder, AttachmentBuilder} = require("discord.js");
