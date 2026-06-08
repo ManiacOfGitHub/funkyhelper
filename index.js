@@ -11,7 +11,6 @@ var matchmakingTimer = 0;
 var logChannels = {normal: null, important: null};
 
 const commandsDir = path.join(__dirname, 'commands');
-const keywordsDir = path.join(__dirname, 'keywords');
 const aliasDir = path.join(__dirname, "alias");
 
 var stickyMessageLib, withdrawalScamLib, onBreakLib, customCommandLib, lockCommandLib, addConsoleLib, birthdayLib, addPropLib, modLib;
@@ -145,7 +144,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "keyword", "deletekeyword", "helpkeywords", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake", "addprop", "removeprop", "delprop", "ban", "yeet", "scamkick"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake", "addprop", "removeprop", "delprop", "ban", "yeet", "scamkick"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -202,66 +201,6 @@ client.on("messageCreate", async (message) => {
 		const embed = new EmbedBuilder().setDescription("This is a test message.");
 		message.channel.send({ embeds: [embed] });
 	}
-
-	// Keyword create command
-	if (message.content.split(" ")[0] === ".keyword") {
-		if (!havePermission(message.member)) {
-			return message.reply("You do not have permission to create keywords.");
-		}
-		if (args.length < 3) {
-			return message.reply("Not enough arguments. Usage: `.keyword <keyword> <response>`");
-		}
-		let keywordName = args[1].toLowerCase();
-		if (keywordName === "" || keywordName.startsWith(".")) {
-			return message.reply("You can't create a keyword with that name.");
-		}
-		const filePath = path.join(keywordsDir, `${keywordName}.botkw`);
-		if (!filePath.startsWith(keywordsDir)) {
-			return message.reply("Invalid keyword path.");
-		}
-		const keywordContent = args.slice(2).join(" ");
-		fs.writeFile(filePath, keywordContent, async(err) => {
-			if (err) return message.reply("Error saving keyword.");
-			await message.reply(`Keyword \`${keywordName}\` created!`);
-			await logChannels.important.send({content:`Keyword \`${keywordName}\` created by ${message.member}`,allowedMentions:{parse:[]}, files: [new AttachmentBuilder(`./keywords/${keywordName}.botkw`)]});
-		});
-		return;
-	}
-
-	// Keyword delete command
-	if (message.content.split(" ")[0] === ".deletekeyword") {
-		if (!havePermission(message.member)) {
-			return message.reply("You do not have permission to delete keywords.");
-		}
-		if (args.length < 2) {
-			return message.reply("Not enough arguments. Usage: `.deletekeyword <keyword>`");
-		}
-		let keywordName = path.basename(args[1]).toLowerCase();
-		const filePath = path.join(keywordsDir, `${keywordName}.botkw`);
-		if (!filePath.startsWith(keywordsDir)) {
-			return message.reply("Invalid keyword path.");
-		}
-		fs.unlink(filePath, async(err) => {
-			if (err) return message.reply(`Keyword \`${keywordName}\` does not exist.`);
-			await message.reply(`Keyword \`${keywordName}\` deleted!`);
-			await logChannels.important.send({content:`Keyword \`${keywordName}\` deleted by ${message.member}`,allowedMentions:{parse:[]}});
-		});
-		return;
-	}
-
-	// Keyword help command
-	if (message.content.split(" ")[0] === ".helpkeywords") {
-		fs.readdir('./keywords', (err, files) => {
-			if (err) return message.reply("Error reading keywords.");
-			const keywordList = files.filter(file => file.endsWith('.botkw')).map(file => file.replace('.botkw', '')).sort();
-			message.reply("Keywords: " + (keywordList.length ? keywordList.join(", ") : "None"));
-		});
-		return;
-	}
-	
-
-	// Check for keyword matches in the message
-	await processKeywords(message);
 
 	if([".say",'.echo','.saybypass','.echobypass'].includes(message.content.split(" ")[0].toLowerCase())) {
 		var bypassMode = commandName.endsWith("bypass");
@@ -669,10 +608,6 @@ client.once(Events.ClientReady, async() => {
 	if (!fs.existsSync(commandsDir)) {
 		fs.mkdirSync(commandsDir, { recursive: true });
 	}
-	const keywordsDir = path.join(__dirname, 'keywords');
-	if (!fs.existsSync(keywordsDir)) {
-		fs.mkdirSync(keywordsDir, { recursive: true });
-	}
 	const aliasDir = path.join(__dirname, 'alias');
 	if (!fs.existsSync(aliasDir)) {
 		fs.mkdirSync(aliasDir, { recursive: true });
@@ -749,63 +684,6 @@ async function processWikiCommands(message) {
 		(await message.fetchReference()).reply(botMessage);
 	} else {
 		message.channel.send(botMessage);
-	}
-}
-
-async function processKeywords(message) {
-	const keywordsPath = path.join(__dirname, 'keywords');
-	if (!fs.existsSync(keywordsPath)) return;
-
-	const files = fs.readdirSync(keywordsPath).filter(file => file.endsWith('.botkw'));
-	const messageContent = message.content.toLowerCase();
-
-	for (const file of files) {
-		const keyword = file.replace('.botkw', '');
-		// Check if keyword appears in message (case-insensitive)
-		if (messageContent.includes(keyword)) {
-			const keywordContent = fs.readFileSync(path.join(keywordsPath, file), 'utf8');
-			if (!keywordContent || keywordContent === "") continue;
-
-			try {
-				if (!(keywordContent.startsWith("`") && keywordContent.endsWith("`"))) {
-					throw Error();
-				}
-				let data = JSON.parse(keywordContent.slice(1, -1));
-				let embed = new EmbedBuilder();
-				if (data.author) embed.setAuthor({ name: data.author });
-				if (data.title) embed.setTitle(data.title);
-				if (data.color) {
-					var consoleColors = {
-						"3DS": 0xCE181E,
-						"WiiU": 0x009AC7,
-						"Switch": 0xE60012,
-						"Wii": 0x009AC7
-					}
-					if (data.color in consoleColors) {
-						embed.setColor(consoleColors[data.color]);
-					} else {
-						embed.setColor(parseInt(data.color, 16));
-					}
-				};
-				if (data.image) embed.setImage(data.image);
-				if (data.description) embed.setDescription(data.description);
-				if (data.footer) embed.setFooter({ text: data.footer });
-				if (data.url) embed.setURL(data.url);
-
-				if (message.reference) {
-					(await message.fetchReference()).reply({ embeds: [embed] });
-				} else {
-					message.reply({ embeds: [embed] });
-				}
-			} catch {
-				if (message.reference) {
-					(await message.fetchReference()).reply(keywordContent);
-				} else {
-					message.reply(keywordContent);
-				}
-			}
-			return; // Only respond to the first matching keyword
-		}
 	}
 }
 
