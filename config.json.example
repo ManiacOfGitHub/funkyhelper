@@ -25,7 +25,8 @@
   "stickyMessageChannels": {
     "1461160222302273579": ["switchPiracy"],
     "1461160222302273578": ["switchPiracy","botCmds"],
-    "1461160222302273584": ["switchPiracy"]
+    "1461160222302273584": ["switchPiracy"],
+    "1461160222302273583": ["mcSmp"]
   },
   "matchmakingRoleId": "1461160220020572260",
   "matchmakingChannelId": "1461160222784487552",
@@ -74,5 +75,7 @@
     " downloaded more RAM.",
     " was morphed into a New 2DS XL and was opened for repair.",
     " had their name written on the Death Note book."
-  ]
+  ],
+  "mc2faChannelId": "1461160221115416757",
+  "mcInfoLink": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 }

@@ -80,6 +80,11 @@ module.exports = (client, logChannels, config) => {
                 embed.setDescription(`If you are here to to use commands for yourself, please go to the <#${config.botCmdsChannelId}> channel. This makes it easier for helpers to give assistance to those who need it.`)
                 embed.setFooter({text:"This message will always appear at the bottom of relevant channels. Stay Funky and Happy Modding!"});
                 embed.setColor("Gold");
+            } else if(type=="mcSmp") {
+                var embed = new EmbedBuilder();
+                embed.setTitle("How to join FunkyMC!");
+                embed.setDescription(`**Version:** Any above 1.9, recommended is 26.1.2\n**IP:** funkyscott47.com\n**Port (Bedrock):** 19132 (default)\n\nIf you are not a cracked player (you have paid for a Minecraft account), run /premium upon joining.\nAt this point, you must verify with your Discord account.\nTo verify, click the Link button in <#${config.mc2faChannelId}> and type /link (code) in-game.\nFor more specific information about this server, check [here](${config.mcInfoLink}) and the other pins in this channel.`);
+                embed.setColor("Green");
             } else {
                 logChannels.important.send(`Sticky message type \`${type}\` does not exist. (Creating sticky messsage in ${channel})`);
                 continue;
