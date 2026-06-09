@@ -163,15 +163,6 @@ client.on("messageCreate", async (message) => {
 		});
 	}
 
-	if(message.content.startsWith(".")) {
-		try {
-			await cogs.customCommand.onCommand(commandName, args, message);
-		} catch(err) {
-			console.error(err);
-			await logChannels.important.send("An error occurred with a custom command. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-		}
-	}
-
 	if (message.content === ".test") {
 		const embed = new EmbedBuilder().setDescription("This is a test message.");
 		message.channel.send({ embeds: [embed] });
