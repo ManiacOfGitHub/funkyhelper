@@ -26,6 +26,7 @@ module.exports = (client, logChannels, config) => {
         }
         if(value) {
             await user.roles.add(config.onBreakRoleId);
+            await user.roles.remove(Object.values(config.cosmeticRoleMap));
             await message.reply("You are now on break. Take that needed time off, you deserve it.");
             try {
                 let channel = await message.guild.channels.fetch(config.modChatChannelId);
@@ -36,6 +37,13 @@ module.exports = (client, logChannels, config) => {
             return;
         } else {
             await user.roles.remove(config.onBreakRoleId);
+            var rolesToAdd = [];
+            for(var staffRole in config.cosmeticRoleMap) {
+                if(util.hasRole(user, staffRole)) {
+                    rolesToAdd.push(config.cosmeticRoleMap[staffRole]);
+                }
+            }
+            await user.roles.add(rolesToAdd);
             await message.reply("You are now off break. Stay Funky and Happy Modding!");
             return;
         }
