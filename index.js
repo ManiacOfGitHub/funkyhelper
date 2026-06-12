@@ -509,47 +509,6 @@ client.on("messageDelete", async (message) => {
 	}
 });
 
-client.on("guildAuditLogEntryCreate", async(auditEntry, guild)=>{
-	try {
-		if(!logChannels) return;
-		if(auditEntry.action !== AuditLogEvent.MemberRoleUpdate) return;
-		let minRolePosition = (await guild.roles.fetch(config.logMinRole)).position;
-		for(var change of auditEntry.changes) {
-			let roleIds = [];
-			for(var role of change.new) {
-				var role = await guild.roles.fetch(role.id);
-				if(role.position>=minRolePosition) {
-					roleIds.push(role.id);
-				}
-			}
-			if(roleIds.length < 1) return;
-			if(change.key=="$add") {
-				let addRoleEmbed = new EmbedBuilder();
-				addRoleEmbed.setAuthor({name:auditEntry.target.username,iconURL:auditEntry.target.displayAvatarURL({extension:"png",size:2048})});
-				addRoleEmbed.setTitle(`Role${(roleIds.length > 1) ? "s" : ""} added`);
-				addRoleEmbed.setDescription(`${roleIds.map(o=>`<@&${o}>`).join(", ")}`);
-				addRoleEmbed.setFooter({text:"ID: " + auditEntry.target.id});
-				addRoleEmbed.setTimestamp();
-				await logChannels.normal.send({embeds: [addRoleEmbed], allowedMentions: {roles: []}});
-			}
-			if(change.key=="$remove") {
-				let removeRoleEmbed = new EmbedBuilder();
-				removeRoleEmbed.setAuthor({name:auditEntry.target.username,iconURL:auditEntry.target.displayAvatarURL({extension:"png",size:2048})});
-				removeRoleEmbed.setTitle(`Role${(roleIds.length > 1) ? "s" : ""} removed`);
-				removeRoleEmbed.setDescription(`${roleIds.map(o=>`<@&${o}>`).join(", ")}`);
-				removeRoleEmbed.setFooter({text:"ID: " + auditEntry.target.id});
-				removeRoleEmbed.setTimestamp();
-				await logChannels.normal.send({embeds: [removeRoleEmbed], allowedMentions: {roles: []}});
-			}
-		}
-	} catch(err) {
-		console.error(err);
-		try {
-			await logChannels.important.send("Failed to process audit log entry creation\nError info: " + (err?(err.message??"syke lmao"):"syke lmao")) 
-		} catch(err) {}
-	}
-})
-
 client.once(Events.ClientReady, async() => {
 	console.log('Ready! Logged in as ' + client.user.tag);
 	client.user.setPresence({
