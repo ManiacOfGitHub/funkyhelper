@@ -184,17 +184,16 @@ client.on("messageCreate", async (message) => {
 			await message.reply("Not enough arguments");
 			return;
 		}
-		var channel;
+		var channel, sliceAt;
 		let channelId = args[1].matchAll(/\d/g).toArray().join("");
-		let sliceAt;
 		if(channelId) {
 			try {
 				channel = await message.guild.channels.fetch(channelId);
 			} catch(err) {}
 		}
 		if(!channel) {
-			channelId = message.channel.id;
-			channel = await message.guild.channels.fetch(channelId);
+			channel = message.channel;
+			channelId = channel.id;
 			sliceAt = 1
 		} else {
 			if (args.length < 3) {
@@ -237,16 +236,17 @@ client.on("messageCreate", async (message) => {
 			return;
 		}
 		let autoMode = !!message.reference;
-		let argsLength;
-		let channelId;
-		let messageId;
+		if(args.length < (autoMode ? 2 : 4)) {
+			await message.reply("Not enough arguments");
+			return;
+		}
+
+		let channelId, messageId, sliceAt;
 		if (autoMode) {
-			argsLength = 2;
 			sliceAt = 1;
 			channelId = message.channel.id
 			messageId = (await message.fetchReference());
 		} else {
-			argsLength = 4;
 			sliceAt = 3;
 			channelId = args[1].matchAll(/\d/g).toArray().join("");
 			messageId = args[2].matchAll(/\d/g).toArray().join("");
@@ -261,10 +261,7 @@ client.on("messageCreate", async (message) => {
 				return message.reply("no");
 			}
 		}
-		if(args.length < argsLength) {
-			await message.reply("Not enough arguments");
-			return;
-		}
+		
 		var channel;
 		if((!config.echoChannelIds.includes(channelId)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
 			await message.reply(`You cannot \`.reply\` into that channel. You can \`.reply\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
@@ -324,28 +321,21 @@ client.on("messageCreate", async (message) => {
 				return message.reply("no");
 			}
 		}
-		if (args.length < 2) {
+		let autoMode = !!message.reference;
+		if(args.length < (autoMode ? 2 : 4)) {
 			await message.reply("Not enough arguments");
 			return;
 		}
-		let autoMode = !!message.reference;
-		let argsLength;
-		let channelId;
-		let messageId;
+
+		let channelId, messageId, sliceAt;
 		if (autoMode) {
-			argsLength = 2;
 			sliceAt = 1;
 			channelId = message.channel.id
 			messageId = (await message.fetchReference());
 		} else {
-			argsLength = 4;
 			sliceAt = 3;
 			channelId = args[1].matchAll(/\d/g).toArray().join("");
 			messageId = args[2].matchAll(/\d/g).toArray().join("");
-		}
-		if(args.length < argsLength) {
-			await message.reply("Not enough arguments");
-			return;
 		}
 		var channel;
 		if((!config.echoChannelIds.includes(channelId)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
