@@ -4,6 +4,7 @@ const path = require('path');
 const { exec } = require('child_process');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const util = require('./util');
+const web = require('./web');
 
 var config = require('./config.json');
 const { log } = require('console');
@@ -614,6 +615,8 @@ client.once(Events.ClientReady, async() => {
 	}
 
 	cogsLoaded = true;
+
+	await web.init(config);
 
 	setInterval(processTimers, 1000);
 });
