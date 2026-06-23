@@ -7,7 +7,7 @@ const util = require('./util');
 
 var config = require('./config.json');
 const { log } = require('console');
-var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.matchmakingRoleId,config.activeModeratorsId]}});
+var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.activeModeratorsId]}});
 var matchmakingTimer = 0;
 var logChannels = {normal: null, important: null};
 
@@ -415,8 +415,21 @@ client.on("messageCreate", async (message) => {
 			await message.reply("This command is on cooldown. Wait " + (minutes ? minutes.toString() + " minute" + (minutes!=1 ? "s" : "") + " and " : "") + (seconds.toString() + " second" + (seconds!=1 ? "s" : "")) + " before sending again");
 		} else {
 			matchmakingTimer = 60 * 10;
-			await message.channel.send("<@&"+config.matchmakingRoleId+">\n**Someone would like to play!**\nIf you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.");
+			await message.channel.send({content:"<@&"+config.matchmakingRoleId+">\n**Someone would like to play!**\nIf you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.", allowedMentions: {roles: [config.matchmakingRoleId]}});
 		}
+	}
+
+	if(message.content.split(" ")[0].toLowerCase() == ".pingmc") {
+		if(!util.hasRole(message.member, [config.moderatorRole, config.mcManagerRoleId]) && !config.botOwners.includes(message.member.id)) {
+			await message.channel.send("no");
+			return;
+		}
+		if(args.length > 1) {
+			await message.channel.send({content:`<@&${config.mcPingRoleId}>\n${args.slice(1).join(" ")}`,allowedMentions:{roles:[config.mcPingRoleId]}});
+		} else {
+			await message.channel.send({content:`<@&${config.mcPingRoleId}>`,allowedMentions:{roles:[config.mcPingRoleId]}});
+		}
+		await message.delete();
 	}
 
 	if([".switchpiracy",".sp"].includes(message.content.split(" ")[0].toLowerCase())) {

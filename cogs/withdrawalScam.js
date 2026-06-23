@@ -51,7 +51,7 @@ module.exports = (client, logChannels, config) => {
 
         let suspiciousMsgEmbed = new EmbedBuilder();
         suspiciousMsgEmbed.setTitle("Potential Withdrawal Scam Message Detected!");
-        suspiciousMsgEmbed.setDescription("The bot has detected a suspicious message ("+message.attachments.size+" images, no message content).\nThis message will now be processed with OCR to see if it's the withdrawal scam.\n"+message.url+"\nThe following terms will be used: " + terms.join(", ")+"\nDuring this testing, no other messages will be observed for the withdrawal scam.");
+        suspiciousMsgEmbed.setDescription("The bot has detected a suspicious message ("+message.attachments.size+" images, no message content).\nThis message will now be processed with OCR to see if it's the withdrawal scam.\n"+message.url+"\nSent by " + message.author.mention + "(" + message.author.id + ")\nThe following terms will be used: " + terms.join(", ")+"\nDuring this testing, no other messages will be observed for the withdrawal scam.");
         suspiciousMsgEmbed.setColor("Gold");
         await logChannels.important.send({embeds:[suspiciousMsgEmbed]});
 
