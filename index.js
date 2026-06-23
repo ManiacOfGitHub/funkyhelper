@@ -119,7 +119,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake", "addprop", "removeprop", "delprop", "ban", "yeet", "scamkick"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake", "addprop", "removeprop", "delprop", "ban", "yeet", "scamkick", "autoreply", "autoreplybypass"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -222,6 +222,53 @@ client.on("messageCreate", async (message) => {
 		}
 	}
 
+	if([".autoreply",'.autoreplybypass'].includes(message.content.split(" ")[0].toLowerCase())) {
+		var bypassMode = commandName.endsWith("bypass");
+		if(bypassMode) {
+			if(!message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
+				return message.reply("no");
+			}
+		} else {
+			if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
+				return message.reply("no");
+			}
+		if (!message.reference) {
+			return message.reply("You did not reply to any message.");
+			return;
+		}
+		}
+		if(args.length < 2) {
+			await message.reply("Not enough arguments");
+			return;
+		}
+		if((!config.echoChannelIds.includes(message.channel.id)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
+			await message.reply(`You cannot \`.autoreply\` into that channel. You can \`.autoreply\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
+			return;
+		}
+		try {
+			if(bypassMode) {
+				var sentMessage = await (await message.fetchReference()).reply({content:args.slice(1).join(" "),allowedMentions:{parse:['roles','users','everyone'],repliedUser:true}});
+			} else {
+				var sentMessage = await (await message.fetchReference()).reply({content:args.slice(1).join(" "),allowedMentions:{repliedUser: false}});
+			}
+			let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${commandName} was used to reply to a message`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Sent [a reply](${sentMessage.url}) to [a message](${(await sentMessage.fetchReference()).url}) in <#${message.channel.id}>:\n${args.slice(1).join(" ")}`);
+			logEmbed.setFooter({text:"ID: " + sentMessage.id});
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds:[logEmbed],allowedMentions:{parse:[]}});
+		} catch(err) {
+			console.error(err);
+			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+		try {
+			await message.delete();
+		} catch(err) {
+			//I really don't care enough to do anything with this too.
+		}
+	}
+	
 	if([".reply",'.replybypass'].includes(message.content.split(" ")[0].toLowerCase())) {
 		var bypassMode = commandName.endsWith("bypass");
 		if(bypassMode) {
