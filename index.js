@@ -176,7 +176,7 @@ client.on("messageCreate", async (message) => {
 				return message.reply("no");
 			}
 		} else {
-			if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
+			if (!message.member.roles.cache.some(role => config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
 				return message.reply("no");
 			}
 		}
@@ -257,7 +257,7 @@ client.on("messageCreate", async (message) => {
 				return message.reply("no");
 			}
 		} else {
-			if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
+			if (!message.member.roles.cache.some(role => config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
 				return message.reply("no");
 			}
 		}
@@ -317,7 +317,7 @@ client.on("messageCreate", async (message) => {
 				return message.reply("no");
 			}
 		} else {
-			if (!message.member.roles.cache.some(role => config.breakRoleList.includes(role.id) || config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
+			if (!message.member.roles.cache.some(role => config.staffRoleList.includes(role.id)) && !havePermission(message.member)) {
 				return message.reply("no");
 			}
 		}
