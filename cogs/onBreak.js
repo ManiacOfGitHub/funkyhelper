@@ -30,7 +30,7 @@ module.exports = (client, logChannels, config) => {
             await message.reply("You are now on break. Take that needed time off, you deserve it.");
             try {
                 let channel = await message.guild.channels.fetch(config.modChatChannelId);
-                await channel.send(`<@&${config.activeModeratorsId}> ${user} is now on break.`);
+                await channel.send(`@silent <@&${config.activeModeratorsId}> ${user} is now on break.`);
             } catch(err) {
                 await logChannels.important.send(`<@&${config.activeModeratorsId}> ${user} is now on break. (Unable to send this in <#${config.modChatChannelId}> for some reason?)`);
             }
