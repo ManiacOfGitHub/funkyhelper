@@ -1,4 +1,5 @@
 var util = require('../util');
+const { MessageFlags } = require('discord.js');
 
 module.exports = (client, logChannels, config) => {
     async function onCommand(command, args, message) {
@@ -30,20 +31,18 @@ module.exports = (client, logChannels, config) => {
             await message.reply("You are now on break. Take that needed time off, you deserve it.");
             try {
                 let channel = await message.guild.channels.fetch(config.modChatChannelId);
-                await channel.send(`@silent <@&${config.activeModeratorsId}> ${user} is now on break.`);
+                await channel.send({content:`<@&${config.activeModeratorsId}> ${user} is now on break.`,flags: [MessageFlags.SuppressNotifications]});
             } catch(err) {
                 await logChannels.important.send(`<@&${config.activeModeratorsId}> ${user} is now on break. (Unable to send this in <#${config.modChatChannelId}> for some reason?)`);
             }
             return;
         } else {
             await user.roles.remove(config.onBreakRoleId);
-            var rolesToAdd = [];
             for(var staffRole in config.cosmeticRoleMap) {
                 if(util.hasRole(user, staffRole)) {
-                    rolesToAdd.push(config.cosmeticRoleMap[staffRole]);
+                    await user.roles.add(config.cosmeticRoleMap[staffRole]);
                 }
             }
-            await user.roles.add(rolesToAdd);
             await message.reply("You are now off break. Stay Funky and Happy Modding!");
             return;
         }
