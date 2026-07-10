@@ -83,7 +83,7 @@ module.exports = (client, logChannels, config) => {
             } else if(type=="mcSmp") {
                 var embed = new EmbedBuilder();
                 embed.setTitle("How to join FunkyMC!");
-                embed.setDescription(`**Version:** Any above 1.9, recommended is ${config.mcVersion}\n**IP:** funkyscott47.com\n**Port (Bedrock):** 19132 (default)\n\nIf you are not a cracked player (you have paid for a Minecraft account), run /premium upon joining.\nAt this point, you must verify with your Discord account.\nTo verify, click the Link button in <#${config.mc2faChannelId}> and type /link (code) in-game.\nFor more specific information about this server, check [here](${config.mcInfoLink}) and the other pins in this channel.`);
+                embed.setDescription(`**Version:** Any above 1.9, recommended is ${config.mcRecVersion}\n**IP:** funkyscott47.com\n**Port (Bedrock):** 19132 (default)\n\nIf you are not a cracked player (you have paid for a Minecraft account), run /premium upon joining.\nAt this point, you must verify with your Discord account.\nTo verify, click the Link button in <#${config.mc2faChannelId}> and type /link (code) in-game.\nFor more specific information about this server, check [here](${config.mcInfoLink}) and the other pins in this channel.`);
                 embed.setColor("Green");
             } else if(type=="matchmaking") {
                 var embed = new EmbedBuilder();
