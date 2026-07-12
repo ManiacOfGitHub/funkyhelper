@@ -203,7 +203,7 @@ client.on("messageCreate", async (message) => {
 			sliceAt = 2
 		}
 		if((!config.echoChannelIds.includes(channelId)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
-			await message.reply(`You cannot \`.${commandName}\` into that channel. You can \`.${commandName}\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
+			await message.reply(`You cannot \`.${commandName}\` into ${sliceAt==1?"this":"that"} channel. You can \`.${commandName}\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
 			return;
 		}	
 		try {
@@ -221,7 +221,7 @@ client.on("messageCreate", async (message) => {
 			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
 		} catch(err) {
 			console.error(err);
-			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 		try {
 			await message.delete();
@@ -264,7 +264,7 @@ client.on("messageCreate", async (message) => {
 		
 		var channel;
 		if((!config.echoChannelIds.includes(channelId)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
-			await message.reply(`You cannot \`.reply\` into that channel. You can \`.reply\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
+			await message.reply(`You cannot \`.reply\` into ${autoMode?"this":"that"} channel. You can \`.reply\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
 			return;
 		}
 		if(channelId) {
@@ -301,7 +301,7 @@ client.on("messageCreate", async (message) => {
 			await logChannels.important.send({embeds:[logEmbed],allowedMentions:{parse:[]}});
 		} catch(err) {
 			console.error(err);
-			await message.reply("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 		try {
 			await message.delete();
@@ -339,7 +339,7 @@ client.on("messageCreate", async (message) => {
 		}
 		var channel;
 		if((!config.echoChannelIds.includes(channelId)) && !message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
-			await message.reply(`You cannot \`.edit\` messages in that channel. You can \`.edit\` messages in : ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
+			await message.reply(`You cannot \`.edit\` messages in ${autoMode?"this":"that"} channel. You can \`.edit\` messages in : ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
 			return;
 		}
 		if(channelId) {
@@ -381,7 +381,7 @@ client.on("messageCreate", async (message) => {
 			await logChannels.important.send({embeds:[logEmbed],allowedMentions:{parse:[]}});
 		} catch(err) {
 			console.error(err);
-			await message.reply("Failed to edit message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+			await logChannels.important.send("Failed to edit message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 		try {
 			await message.delete();
