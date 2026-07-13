@@ -158,6 +158,7 @@ module.exports = (client, logChannels, config, clientState) => {
             var messageData = [];
             var embedDescriptionData = [""];
             messages.each(message=>{
+                if(config.excludeLogChannels.includes(message.channel.id)) return;
                 var username = ">>UNKNOWN<<";
                 try {
                     if(message.author.username) username = message.author.username;
@@ -165,6 +166,7 @@ module.exports = (client, logChannels, config, clientState) => {
                 if(!message.content) return;
                 messageData.unshift(`[${username}]: ${message.content}`);
             });
+            if(messageData.length == 0) return;
             var i = 0;
             for(var message of messageData) {
                 var newEmbedData = embedDescriptionData[i] + message + "\n";
@@ -202,6 +204,7 @@ module.exports = (client, logChannels, config, clientState) => {
     async function messageDeleteHandler(message) {
         try {
             if(message.author.bot) return;
+            if(config.excludeLogChannels.includes(message.channel.id)) return;
             var description = `${message.content}\n\nMessage ID: ${message.id}`;
             if(message.attachments.size > 0) {
                 description += "\nThis message also has " + message.attachments.size.toString() + " attachments that will be logged separately.";
@@ -223,6 +226,7 @@ module.exports = (client, logChannels, config, clientState) => {
     }
 
     async function messageEditHandler(oldMessage, newMessage) {
+        if(config.excludeLogChannels.includes(oldMessage.channel.id)) return;
         try {
         if(oldMessage.content == newMessage.content) return;
         if(newMessage.author.bot) return;

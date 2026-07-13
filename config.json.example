@@ -84,5 +84,7 @@
   },
   "mcPingRoleId": "1518797832193183856",
   "mcManagerRoleId": "1518797523790204959",
-  "mcRecVersion": "21.1.2"
+  "mcRecVersion": "21.1.2",
+  "webPort": 3000,
+  "excludeLogChannels": ["1461160220880408774"]
 }
