@@ -123,6 +123,7 @@ module.exports = (client, logChannels, config, clientState) => {
             }
         } catch(err) {
             var isOffTopic = false;
+            if(!data.startsWith) return;
             if(data.startsWith("offtopic ")) {
                 isOffTopic = true;
                 data = data.split(" ").slice(1).join(" ");
