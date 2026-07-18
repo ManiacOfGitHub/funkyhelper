@@ -7,6 +7,7 @@ var birthdaysPath = path.resolve("./birthdays.json");
 var birthdays;
 var birthdayChannel;
 var birthdayRole;
+var commandList = ["birthday", "birth", "cake"];
 
 module.exports = (client, logChannels, config) => {
     async function onReady() {
@@ -31,7 +32,7 @@ module.exports = (client, logChannels, config) => {
     }
     async function onCommand(commandName, args, message) {
         var isStaff = util.hasRole(message.member, config.staffRoleList);
-        if(!["birthday","birth","cake"].includes(commandName)) return;
+        if(!commandList.includes(commandName)) return;
         if(args.length<2) {
             await message.reply("Argument not provided.");
             return;
@@ -170,6 +171,7 @@ module.exports = (client, logChannels, config) => {
     }
     return {
         onReady,
-        onCommand
+        onCommand,
+        commandList
     }
 }

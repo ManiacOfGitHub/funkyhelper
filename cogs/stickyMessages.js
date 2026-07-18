@@ -89,6 +89,11 @@ module.exports = (client, logChannels, config) => {
                 var embed = new EmbedBuilder();
                 embed.setTitle("Ping to find players!");
                 embed.setDescription(`Do you wanna find members to play with? Type \`.matchmaking\` in this channel to ping <@&${config.matchmakingRoleId}>. This command can only be used every 10 minutes, please do not spam it.\n-# If you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.`);
+            } else if(type=="appeals") {
+                var embed = new EmbedBuilder();
+                embed.setTitle(`No Chatting, Appeals Only!`);
+                embed.setDescription(`This channel is solely used for appealing restrictions that have been applied to you.\n**Do not send any messages in this channel unless:**\n* You are appealing\n* You are staff\n* You are involved in the current incident\n\nStaff can handle all incidents without outsider's opinions.\nIf you would like to appeal a restriction, you may find [this template](${config.appealsTemplateLink}) helpful.`);
+                embed.setColor("DarkRed");
             } else {
                 logChannels.important.send(`Sticky message type \`${type}\` does not exist. (Creating sticky messsage in ${channel})`);
                 continue;

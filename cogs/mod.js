@@ -1,9 +1,11 @@
-var {EmbedBuilder} = require("discord.js");
+var {EmbedBuilder, Embed} = require("discord.js");
 var util = require('../util');
+
+var commandList = ["ban", "yeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute"];
 
 module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(command, args, message) {
-        if(!["ban","yeet","scamkick"].includes(command)) return;
+        if(!commandList.includes(command)) return;
         if(!config.fullPermsMode) {
             await message.channel.send("You cannot use this command when `fullPermsMode` is disabled.");
             return;
@@ -45,9 +47,10 @@ module.exports = (client, logChannels, config, clientState) => {
             return;
         }
         if(util.hasRole(user, config.staffRoleList)) {
-            await message.reply("FunkyHelper does not have permission to ban staff, please do so manually.");
+            await message.reply("FunkyHelper will not afflict any punishments upon staff, please do so manually.");
             return;
         }
+
         if(command=="ban" || command=="yeet") {
             if(!message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
                 await message.channel.send("no");
@@ -120,8 +123,146 @@ module.exports = (client, logChannels, config, clientState) => {
 			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
             return;
         }
+        if(command == "kick") {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+            try {
+                let kickedEmbed = new EmbedBuilder();
+                kickedEmbed.setTitle("Moderation Action");
+                kickedEmbed.setDescription(`**You have been kicked from ${message.guild.name}.**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nYou can rejoin the server.`);
+                kickedEmbed.setColor("DarkRed");
+                await user.send({embeds: [kickedEmbed]});
+                await logChannels.important.send("DM succeeded!");
+            } catch(err) {
+                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+            }
+
+            try {
+                await user.kick({reason: args.slice(2).join(" ")});
+            } catch(err) {
+                await message.reply("Failed to kick member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+            
+            var funnyOptions = config.funnyOptions;
+            await message.reply(user.user.username + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# Kick successful.");
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to kick a user`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Kicked ${user.user.username} (user ID: ${userId}) from the server.`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
+
+        if(["takehelp", "nohelp"].includes(command)) {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+            try {
+                var appealsChannel = await message.guild.channels.fetch(config.appealsChannelId);
+                let noHelpEmbed = new EmbedBuilder();
+                noHelpEmbed.setTitle("Moderation Action");
+                noHelpEmbed.setDescription(`**You have lost help channel privleges in ${message.guild.name}.**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nYou can appeal in the ${appealsChannel.url} channel.`);
+                noHelpEmbed.setColor("DarkRed");
+                await user.send({embeds: [noHelpEmbed]});
+                await logChannels.important.send("DM succeeded!");
+            } catch(err) {
+                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+            }
+
+            try {
+                await user.roles.add(config.noHelpRoleId);
+            } catch(err) {
+                await message.reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+
+            var funnyOptions = config.funnyOptions;
+            await message.reply(user.user.username + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# User lost access to help channels.");
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to remove help channel access from a user`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Gave nohelp role to ${user.user.username} (user ID: ${userId}).`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
+
+        if(["givehelp", "yeshelp"].includes(command)) {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+
+            try {
+                await user.roles.remove(config.noHelpRoleId);
+            } catch(err) {
+                await message.reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+
+            await message.reply("User is now free as a bird.");
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to give help channel back to a user`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Removed nohelp role from ${user.user.username} (user ID: ${userId}).`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
+
+        if(["appealmute", "appealsmute"].includes(command)) {
+            if(!util.hasRole(message.member, config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+
+            try {
+                await user.roles.add(config.appealMuteRoleId);
+            } catch(err) {
+                await message.reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+
+            await message.reply(`${user.user.username} can no longer speak in <#${config.appealsChannelId}>.`);
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to mute a user in <#${config.appealsChannelId}>`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Gave appealmute role to ${user.user.username} (user ID: ${userId}).`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
+
+        if(["appealunmute", "appealsunmute"].includes(command)) {
+            if(!util.hasRole(message.member, config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+
+            try {
+                await user.roles.remove(config.appealMuteRoleId);
+            } catch(err) {
+                await message.reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+
+            await message.reply(`${user.user.username} can now speak in <#${config.appealsChannelId}>.`);
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to unmute a user in <#${config.appealsChannelId}>`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Removed appealmute role from ${user.user.username} (user ID: ${userId}).`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
     }
     return {
-        onCommand
+        onCommand,
+        commandList
     };
 }

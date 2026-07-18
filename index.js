@@ -18,6 +18,9 @@ const aliasDir = path.join(__dirname, "alias");
 var cogs = {};
 var cogsLoaded = false;
 var clientState = {};
+var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"];
+
+
 
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
@@ -120,7 +123,7 @@ client.on("messageCreate", async (message) => {
 		if (args.length < 3) {
 			return message.reply("Not enough arguments. Usage: `.create <command name> <command content>`");
 		}
-		if (["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "onbreak", "offbreak", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "birthday", "birth", "cake", "addprop", "removeprop", "delprop", "ban", "yeet", "scamkick"].includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
+		if (commandList.includes(commandName.toLowerCase()) || (commandName.startsWith(".") || commandName === "")) {
 			return message.reply("You can't create a command with that name.");
 		}
 		commandName = commandName.toLowerCase();
@@ -596,6 +599,9 @@ client.once(Events.ClientReady, async() => {
 	for(let cogName in cogs) {
 		if(cogs[cogName].hasOwnProperty("onReady")) {
 			await cogs[cogName].onReady();
+		}
+		if(cogs[cogName].hasOwnProperty("commandList")) {
+			commandList.push(...cogs[cogName].commandList);
 		}
 	}
 

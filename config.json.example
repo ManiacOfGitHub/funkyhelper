@@ -26,7 +26,8 @@
     "1461160222302273579": ["switchPiracy"],
     "1461160222302273578": ["switchPiracy","botCmds"],
     "1461160222302273584": ["switchPiracy"],
-    "1461160222302273583": ["mcSmp"]
+    "1461160222302273583": ["mcSmp"],
+    "1527823490139558038": ["appeals"]
   },
   "matchmakingRoleId": "1461160220020572260",
   "matchmakingChannelId": "1461160222784487552",
@@ -86,5 +87,9 @@
   "mcManagerRoleId": "1518797523790204959",
   "mcRecVersion": "21.1.2",
   "webPort": 3000,
-  "excludeLogChannels": ["1461160220880408774"]
+  "excludeLogChannels": ["1461160220880408774"],
+  "appealsChannelId": "1527823490139558038",
+  "noHelpRoleId": "1527830205782298714",
+  "appealMuteRoleId": "1527830291668930610",
+  "appealsTemplateLink": "https://discord.com/channels/1461160219995279390/1527823490139558038/1527829767213023404"
 }

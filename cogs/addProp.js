@@ -1,9 +1,10 @@
 var fs = require('fs');
 var objectPath = require("object-path");
+var commandList = ["addprop", "removeprop", "delprop"];
 
 module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(command, args, message) {
-        if(!(["addprop", "removeprop", "delprop"].includes(command))) return;
+        if(!commandList.includes(command)) return;
         if(!clientState.havePermission(message.member)) {
             await message.reply("You do not have permission to edit commands.");
             return;
@@ -60,6 +61,7 @@ module.exports = (client, logChannels, config, clientState) => {
         }
     }
     return {
-        onCommand
+        onCommand,
+        commandList
     }
 }
