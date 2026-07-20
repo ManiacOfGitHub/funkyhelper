@@ -36,16 +36,16 @@ module.exports = (client, logChannels, config) => {
         }
 
         if(lock) {
-            if(message.member.id == dangerUserId) {
+            if(message.author.id == dangerUserId) {
                 tempSusMessages.push(message);
             }
             return;
         }
 
-        
+
         lock = true;
         tempSusMessages.push(message);
-        dangerUserId = message.member.id;
+        dangerUserId = message.author.id;
 
         let terms = ["withdraw", "promo code", "promocode", "was successfull", ...config.extraWithdrawalScamTerms];
 
@@ -92,12 +92,19 @@ module.exports = (client, logChannels, config) => {
         scamDetectedEmbed.setColor("Red");
         await logChannels.important.send({embeds: [scamDetectedEmbed]});
 
+        let member = message.member ?? await message.guild?.members.fetch(message.author.id).catch(()=>null);
+        if(!member) {
+            await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! The member object for ${message.author.toString()} (${message.author.id}) could not be resolved, so they could not be banned. They have likely already left the server. Please review manually.`);
+            await liftLock();
+            return;
+        }
+
         try {
             let scamKickedEmbed = new EmbedBuilder();
             scamKickedEmbed.setTitle("Suspicious Activity");
             scamKickedEmbed.setDescription("You have been kicked from " + message.guild.name + " due to messages that seem to be created by a bot that has hijacked your account. Once you have verified that your account is back under your control, you can rejoin [here](https://discord.gg/eVQkMaTQw2).");
             scamKickedEmbed.setColor("DarkRed");
-            await message.member.send({embeds: [scamKickedEmbed]});
+            await member.send({embeds: [scamKickedEmbed]});
             await logChannels.important.send("DM succeeded!");
         } catch(err) {
             await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
@@ -120,14 +127,14 @@ module.exports = (client, logChannels, config) => {
         }
         await logChannels.important.send({ content: messageText, flags: [4096], files });
 
-        let id = message.member.id;
+        let id = member.id;
 
         try {
             await logChannels.important.send("Attempting to ban user (temporarily in order to remove messages)...");
-            if(util.hasRole(message.member, config.staffRoleList)) throw Error("Member is staff, ban protection activated");
-            await message.member.ban({deleteMessageSeconds: 60 * 60 * 24, reason: "Withdrawal Scam Detected by FunkyHelper"});
+            if(util.hasRole(member, config.staffRoleList)) throw Error("Member is staff, ban protection activated");
+            await member.ban({deleteMessageSeconds: 60 * 60 * 24, reason: "Withdrawal Scam Detected by FunkyHelper"});
         } catch(err) {
-            await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! ${message.member} was unable to be banned!\nReason: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+            await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! ${member} was unable to be banned!\nReason: ` + (err?(err.message??"syke lmao"):"syke lmao"));
             await liftLock();
             return;
         }
@@ -148,7 +155,7 @@ module.exports = (client, logChannels, config) => {
             await message.guild.bans.remove(id);
             await logChannels.important.send("Unban succeeded.");
         } catch(err) {
-            await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! ${message.member} was unable to be unbanned! Please ensure that user is able to rejoin server.\nReason: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+            await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! ${member} was unable to be unbanned! Please ensure that user is able to rejoin server.\nReason: ` + (err?(err.message??"syke lmao"):"syke lmao"));
         }
 
         await liftLock();
