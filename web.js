@@ -1,10 +1,14 @@
 var express = require("express");
 var app = express();
+var path = require("path");
 var port, config;
+
+app.use(express.static('public'));
+app.set('view engine', 'ejs');
 
 
 app.get("/", (req, res)=>{
-    res.send("felper has a website now");
+    res.render('index');
 })
 
 
