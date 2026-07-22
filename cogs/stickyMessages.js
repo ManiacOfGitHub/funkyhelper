@@ -8,12 +8,18 @@ var stickyMessageFile = path.resolve("./stickyMessage.json");
 
 module.exports = (client, logChannels, config) => {
     async function onReady() {
+        let skipChannelIds = [];
         if(fs.existsSync(stickyMessageFile)) {
             var stickyMessagesToDelete = require(stickyMessageFile);
             for(let channelId in stickyMessagesToDelete) {
                 try {
                     let messageId = stickyMessagesToDelete[channelId];
                     let channel = await client.channels.fetch(channelId);
+                    if(channel.lastMessageId == messageId) {
+                        stickyMessages[channelId] = messageId;
+                        skipChannelIds.push(channelId);
+                        continue;
+                    }
                     let message = await channel.messages.fetch(messageId);
                     await message.delete();
                 } catch(err) {
@@ -21,9 +27,9 @@ module.exports = (client, logChannels, config) => {
                 }
             }
         }
-        stickyMessages = {};
         updateStickyMessageFile();
         for(let channelId in config.stickyMessageChannels) {
+            if(skipChannelIds.includes(channelId)) continue
             try {
                 let channel = await client.channels.fetch(channelId);
                 await sendStickyMessage(channel,config.stickyMessageChannels[channelId]);
