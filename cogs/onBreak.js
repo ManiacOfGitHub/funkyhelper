@@ -40,12 +40,12 @@ module.exports = (client, logChannels, config) => {
         if(value) {
             await user.roles.add(config.onBreakRoleId);
             await message.reply("You are now on break. Take that needed time off, you deserve it.");
-            await logChannels.important.send({content:`<@&${config.activeModeratorsId}> ${user} is now on break.\nReason: ${args.slice(1)}`,flags: [MessageFlags.SuppressNotifications],allowedMentions:{parse:['roles']}});
+            await logChannels.important.send({content:`<@&${config.activeModeratorsId}> ${user} is now on break.\nReason: ${args.slice(1).join(" ")}`,flags: [MessageFlags.SuppressNotifications],allowedMentions:{parse:['roles']}});
             return;
         } else {
             await user.roles.remove(config.onBreakRoleId);
             await message.reply("You are now off break. Stay Funky and Happy Modding!");
-            await logChannels.important.send({content:`${user} is now off break.\nReason: ${args.length>1?args.slice(1):"Not provided"}`,allowedMentions:{parse:[]}});
+            await logChannels.important.send({content:`${user} is now off break.\nReason: ${args.length>1?args.slice(1).join(" "):"Not provided"}`,allowedMentions:{parse:[]}});
             return;
         }
        
