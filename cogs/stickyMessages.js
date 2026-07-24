@@ -100,6 +100,11 @@ module.exports = (client, logChannels, config) => {
                 embed.setTitle(`No Chatting, Appeals Only!`);
                 embed.setDescription(`This channel is solely used for appealing restrictions that have been applied to you.\n**Do not send any messages in this channel unless:**\n* You are appealing\n* You are staff\n* You are involved in the current incident\n\nStaff can handle all incidents without outsider's opinions.\nIf you would like to appeal a restriction, you may find [this template](${config.appealsTemplateLink}) helpful.`);
                 embed.setColor("DarkRed");
+            } else if(type=="mcDown") {
+                var embed = new EmbedBuilder();
+                embed.setTitle(`FunkyMC is down!`);
+                embed.setDescription(`FunkyMC is offline for maintenance. Please check back again later.`);
+                embed.setColor("Red");
             } else {
                 logChannels.important.send(`Sticky message type \`${type}\` does not exist. (Creating sticky messsage in ${channel})`);
                 continue;
