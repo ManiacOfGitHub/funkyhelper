@@ -8,7 +8,11 @@ app.set('view engine', 'ejs');
 
 
 app.get("/", (req, res)=>{
-    res.render('index');
+    res.render('index', {active: 'index'});
+});
+
+app.get("/privacy", (req, res)=>{
+    res.render('privacy', {active: 'privacy'});
 })
 
 

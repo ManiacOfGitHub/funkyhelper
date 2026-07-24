@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,5 +8,46 @@
     </head>
     <body>
         <%- include("partials/navbar.ejs") %>
+        <div class="container my-5">
+            <div class="row align-items-center">
+                <div class="col-6">
+                    <img src="/profile-picture.png" alt="FunkyHelper Profile Picture">
+                </div>
+                <div class="col-6">
+                    <div class="card bg-body-tertiary">
+                        <div class="card-header">
+                            <h5 class="card-title">FunkyHelper says...</h5>
+                        </div>
+                        <div class="card-body fs-3">
+                            <%
+                            let choices = [
+                                "Dyno and Carl scream when I come 'round",
+                                "Random funny message",
+                                "Stay Funky and Happy Modding!",
+                                "Wait, where are my legs?",
+                                "i use debian btw",
+                                "<a href=\"https://i.kym-cdn.com/photos/images/original/002/436/670/e9c\">Did you know it's actually really easy to mod a 3DS?</a>",
+                                "better than llms",
+                                "SCOTT LOOK AT ME I'M FUNKY TOO",
+                                "I pay for all of my games legitimately, Nintendo. Yup. I'm a good bot.",
+                                "Holy shit, there's a new Switch 2 exploit!<br><span class=\"fs-6\">Nah, just kidding. Can you imagine tho?</span>",
+                                "Your IP address is 127.0.0.1",
+                                "Call your mom. Or don't. I'm not the boss of you, I'm a Discord bot.",
+                                "Stay Funky and Happy Paying for Switch Games"
+                            ];
+                            var selectedNum = ~~(Math.random()*choices.length);
+                            var selectedChoice = choices[selectedNum];
+                            %>
+                            <%- selectedChoice %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="alert alert-secondary fs-5">
+                Found an issue? Got an idea? Check out the <a href="https://github.com/ManiacOfGitHub/funkyhelper">GitHub repo</a>!
+            </div>
+            <div class="text-center fs-4 my-5">More cool stuff will be coming to this site <b>SOON™</b>!</div>
+        </div>
     </body>
 </html>

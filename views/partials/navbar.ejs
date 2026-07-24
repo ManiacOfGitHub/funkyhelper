@@ -1,1 +1,15 @@
-<nav class="navbar"></nav>
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid">
+        <a <%- active == "index" ? 'aria-current="true"' : 'href="/" aria-current="false"' %> class="navbar-brand">FunkyHelper</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarLinks" aria-controls="navbarLinks" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarLinks">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="<%- active == "privacy" ? "#" : "/privacy" %>">Privacy Policy</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
