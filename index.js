@@ -18,7 +18,7 @@ const aliasDir = path.join(__dirname, "alias");
 var cogs = {};
 var cogsLoaded = false;
 var clientState = {};
-var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"];
+var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "config", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload", "setconfig"];
 
 
 
@@ -448,34 +448,6 @@ client.on("messageCreate", async (message) => {
 		}
 		await message.reply("Bot is now restarting... (unless you don't have monit lol)");
 		exec("monit restart funkyhelper");
-	}
-
-	if(message.content.split(" ")[0].toLowerCase() == ".config") {
-		if (!config.botOwners.includes(message.member.id)) {
-			return message.reply("You do not have permission to edit the configuration. (You must be part of the `botOwners` list)");
-		}
-
-		let content = args.slice(1).join(" ");
-		if(!content.startsWith("`") || !content.endsWith("`")) {
-			return message.reply("You must surround JSON with backticks (`)");
-		}
-		content = content.slice(1,-1);
-		try {
-			content = JSON.parse(content);
-		} catch(err) {
-			return message.reply("Failed to parse as JSON.");
-		}
-		for(let i in content) {
-			config[i] = content[i];
-		}
-		 
-		try {
-			fs.writeFileSync("config.json", JSON.stringify(config, null, 2));
-		} catch(err) {
-			return message.reply("Failed to save config to file.");
-		}
-
-		return message.reply("Updated config! In some cases, you may need to restart the bot for the changes to apply.");
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".source") {
