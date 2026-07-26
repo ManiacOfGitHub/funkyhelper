@@ -18,7 +18,7 @@ const aliasDir = path.join(__dirname, "alias");
 var cogs = {};
 var cogsLoaded = false;
 var clientState = {};
-var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "switchpiracy", "sp", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"];
+var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"];
 
 
 
@@ -427,10 +427,6 @@ client.on("messageCreate", async (message) => {
 			return;
 		}
 		await message.channel.send({content:`<@&${config.activeModeratorsId}>\n\n**${message.member} has pinged you for moderation purposes.**`, allowedMentions:{roles:[config.activeModeratorsId]}});
-	}
-
-	if([".switchpiracy",".sp"].includes(message.content.split(" ")[0].toLowerCase())) {
-		return await message.channel.send("The Switch Piracy Watchlist is no more!\nIf you are staff, please refer to this message for more information: https://discord.com/channels/1041089944673853490/1413260588280451072/1503548955911389264.\n-# This is a temporary message and will be deleted eventually.");
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".pull") {
