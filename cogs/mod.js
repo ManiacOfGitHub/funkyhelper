@@ -1,7 +1,7 @@
 var {EmbedBuilder, Embed} = require("discord.js");
 var util = require('../util');
 
-var commandList = ["ban", "yeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute"];
+var commandList = ["ban", "yeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute"];
 
 module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(command, args, message) {
@@ -256,6 +256,52 @@ module.exports = (client, logChannels, config, clientState) => {
 			logEmbed.setTitle(`.${command} was used to unmute a user in <#${config.appealsChannelId}>`);
 			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
 			logEmbed.setDescription(`Removed appealmute role from ${user.user.username} (user ID: ${userId}).`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
+
+        if(["pingmodmute", "modpingmute"].includes(command)) {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+
+            try {
+                await user.roles.add(config.modPingMuteRoleId);
+            } catch(err) {
+                await message.reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+
+            await message.reply({content:`${user.user.username} can no longer ping <@&${config.activeModeratorsId}> with \`.modping\`.`,allowedMentions:{parse:[]}});
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to mod ping mute a user.`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Gave modpingmute role to ${user.user.username} (user ID: ${userId}).`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
+
+        if(["pingmodunmute", "modpingunmute"].includes(command)) {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+
+            try {
+                await user.roles.remove(config.modPingMuteRoleId);
+            } catch(err) {
+                await message.reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+
+            await message.reply({content:`${user.user.username} can now ping <@&${config.activeModeratorsId}> with \`.modping\`.`, allowedMentions: {parse: []}});
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to give \`.modping\` access back to a user.`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Removed modpingmute role from ${user.user.username} (user ID: ${userId}).`);
 			logEmbed.setTimestamp();
 			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
             return;

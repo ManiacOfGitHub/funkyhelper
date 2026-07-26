@@ -91,5 +91,6 @@
   "appealsChannelId": "1527823490139558038",
   "noHelpRoleId": "1527830205782298714",
   "appealMuteRoleId": "1527830291668930610",
-  "appealsTemplateLink": "https://discord.com/channels/1461160219995279390/1527823490139558038/1527829767213023404"
+  "appealsTemplateLink": "https://discord.com/channels/1461160219995279390/1527823490139558038/1527829767213023404",
+  "modPingMuteRoleId": "1530682292551290981"
 }
