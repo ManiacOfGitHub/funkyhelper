@@ -38,6 +38,10 @@ module.exports = (client, logChannels, config, clientState) => {
 				notChanged.push(i);
 				continue;
 			}
+			if(i=="token") {
+				notChanged.push(i);
+				continue;
+			}
 			changedSomething = true;
             if (command == "addconfig") {
 				if(Array.isArray(config[i])) {
