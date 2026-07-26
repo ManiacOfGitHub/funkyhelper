@@ -1,16 +1,27 @@
 var fs = require("fs");
 var {EmbedBuilder} = require("discord.js");
 var util = require('../util');
+var commandList = ["config", "addconfig","viewconfig"];
 
 module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(command, args, message) {
-	    if(!["config", "setconfig"].includes(command)) {
-            return
-        }
+	    if(!commandList.includes(command)) return;
 		if (!util.hasRole(message.member, config.allowRoleList)) {
 			return message.reply("no");
 		}
 		let content = args.slice(1).join(" ");
+		if(command == "viewconfig") {
+			if(!config.hasOwnProperty(content)) {
+				return message.reply({content:`The config has no \`${content}\` property.`,allowedMentions:{parse:[]}});
+			}
+			if(content == "token") {
+				return message.reply("Are you fr rn?");
+			}
+			if(!config.staffConfig.includes(content) && !config.botOwners.includes(message.member.id)) {
+				return message.reply(`You cannot view the \`${content}\` property of the config as you are not a Bot Owner.`);
+			}
+			return message.reply(`\`${JSON.stringify(config[content])}\``);
+		}
 		if(!content.startsWith("`") || !content.endsWith("`")) {
 			return message.reply("You must surround JSON with backticks (`)");
 		}
@@ -20,21 +31,22 @@ module.exports = (client, logChannels, config, clientState) => {
 		} catch(err) {
 			return message.reply("Failed to parse as JSON.");
 		}
+		var notChanged = [];
+		var changedSomething = false;
 		for(let i in content) {
-			if (!(config.staffConfig.includes(i) || config.botOwners.includes(message.member.id))) {
-				return message.reply("One or more options are not allowed to be added unless you are a bot owner");
+			if (!config.staffConfig.includes(i) && !config.botOwners.includes(message.member.id)) {
+				notChanged.push(i);
+				continue;
 			}
-            if (command === "config") {
-                try {
+			changedSomething = true;
+            if (command == "addconfig") {
+				if(Array.isArray(config[i])) {
 			        config[i].push(content[i]);
-                } catch (error) {
-                    if (error == "TypeError: Cannot read properties of undefined (reading 'push')") {
-                        config[i] = [];
-        		        config[i].push(content[i]);
-                    }   
+                } else {
+					config[i] = [content[i]];
                 }
             } else {
-                config[i] = content[i]
+                config[i] = content[i];
             }
 		}
 		 
@@ -49,9 +61,24 @@ module.exports = (client, logChannels, config, clientState) => {
 		logEmbed.setFooter({text:"ID: " + message.member.id});
 		logEmbed.setTimestamp();
 		await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-		return message.reply("Updated config! In some cases, you may need to restart the bot for the changes to apply.");
+
+		var notChangedStr = notChanged.map(prop=>`\`${prop}\`${prop=="token"?" (what is wrong with you)":""}`).join(" ");
+		if(changedSomething) {
+			if(notChanged.length > 0) {
+				await message.reply(`The following properties could not be set due to you not being a Bot Owner:\n${notChangedStr}\nAll other properties were successfully set.`);
+			} else {
+				await message.reply(`All properties were successfully set!`);
+			}
+		} else {
+			if(notChanged.length > 0) {
+				await message.reply(`None of the properties specified were able to be set due to you not being a Bot Owner.`);
+			} else {
+				await message.reply(`No properties were specified.`);
+			}
+		}
     }
     return {
-        onCommand
+        onCommand,
+		commandList
     }
 }
