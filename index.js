@@ -421,6 +421,14 @@ client.on("messageCreate", async (message) => {
 		await message.delete();
 	}
 
+	if([".pingmod",".modping"].includes(message.content.split(" ")[0].toLowerCase())) {
+		if(util.hasRole(message.member, config.modPingMuteRoleId)) {
+			await message.reply({content:`Your ability to ping <@&${config.activeModeratorsId}> has been restricted. You can appeal in <#${config.appealsChannelId}>.`,allowedMentions:{parse:[]}});
+			return;
+		}
+		await message.channel.send({content:`<@&${config.activeModeratorsId}>\n\n**${message.member} has pinged you for moderation purposes.**`, allowedMentions:{roles:[config.activeModeratorsId]}});
+	}
+
 	if([".switchpiracy",".sp"].includes(message.content.split(" ")[0].toLowerCase())) {
 		return await message.channel.send("The Switch Piracy Watchlist is no more!\nIf you are staff, please refer to this message for more information: https://discord.com/channels/1041089944673853490/1413260588280451072/1503548955911389264.\n-# This is a temporary message and will be deleted eventually.");
 	}
