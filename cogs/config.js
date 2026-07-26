@@ -17,7 +17,7 @@ module.exports = (client, logChannels, config, clientState) => {
 			if(content == "token") {
 				return message.reply("Are you fr rn?");
 			}
-			if(!config.staffConfig.includes(content) && !config.botOwners.includes(message.member.id)) {
+			if(![...config.staffConfig, "staffConfig"].includes(content) && !config.botOwners.includes(message.member.id)) {
 				return message.reply(`You cannot view the \`${content}\` property of the config as you are not a Bot Owner.`);
 			}
 			return message.reply(`\`${JSON.stringify(config[content])}\``);
