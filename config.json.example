@@ -93,5 +93,20 @@
   "appealMuteRoleId": "1527830291668930610",
   "appealsTemplateLink": "https://discord.com/channels/1461160219995279390/1527823490139558038/1527829767213023404",
   "staffConfig": ["funnyOptions"],
-  "modPingMuteRoleId": "1530682292551290981"
+  "modPingMuteRoleId": "1530682292551290981",
+  "funkyhelperSays": [
+  "Dyno and Carl scream when I come 'round",
+  "Random funny message",
+  "Stay Funky and Happy Modding!",
+  "Wait, where are my legs?",
+  "i use debian btw",
+  "<a href=\"https://i.kym-cdn.com/photos/images/original/002/436/670/e9c\">Did you know it's actually really easy to mod a 3DS?</a>",
+  "better than llms",
+  "SCOTT LOOK AT ME I'M FUNKY TOO",
+  "I pay for all of my games legitimately, Nintendo. Yup. I'm a good bot.",
+  "Holy shit, there's a new Switch 2 exploit!<br><span class=\"fs-6\">Nah, just kidding. Can you imagine tho?</span>",
+  "Your IP address is 127.0.0.1",
+  "Call your mom. Or don't. I'm not the boss of you, I'm a Discord bot.",
+  "Stay Funky and Happy Paying for Switch Games"
+  ]
 }
