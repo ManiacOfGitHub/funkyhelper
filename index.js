@@ -18,7 +18,7 @@ const aliasDir = path.join(__dirname, "alias");
 var cogs = {};
 var cogsLoaded = false;
 var clientState = {};
-var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "echo", "echobypass", "say", "saybypass", "reply", "replybypass", "edit", "editbypass", "pull", "stop", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"];
+var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "pull", "stop", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"];
 
 
 
