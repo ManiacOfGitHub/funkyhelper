@@ -21,7 +21,7 @@ module.exports = (client, logChannels, config) => {
         if((dangerUserId == message.author.id) && scamDetectedAndBanned) {
             try {
                 await message.delete();
-                await logChannels.important.send("A message in <#"+message.channel.id+"> from " + message.author.mention + "(" + message.author.id + ") was caught after the user was temporarily banned and has now been deleted. (Note: This was done via `dangerUserId`, which means that this message was processed/sent after the user had already been banned.)");
+                await logChannels.important.send("A message in <#"+message.channel.id+"> from " + message.author.toString() + " (" + message.author.id + ") was caught after the user was temporarily banned and has now been deleted. (Note: This was done via `dangerUserId`, which means that this message was processed/sent after the user had already been banned.)");
             } catch(err) {}
             return;
         }
