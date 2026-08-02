@@ -59,7 +59,7 @@ module.exports = (client, logChannels, config, clientState) => {
             try {
                 let banEmbed = new EmbedBuilder();
                 banEmbed.setTitle("Moderation Action");
-                banEmbed.setDescription(`**You have been banned from ${message.guild.name}.**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nWe currently don't have a proper appeals process set up... so for now, you can just email maniacofhomebrew@nintendohomebrew.com with the following:\n* Why you think you should be unbanned\n* What rules you violated (if any)\nPlease do not spam, it may take a few days to respond.`);
+                banEmbed.setDescription(`**You have been banned from ${message.guild.name}.**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nIf you would like to appeal, email staff@funkyscott47.com with the following:\n* Why you think you should be unbanned\n* What rules you violated (if any)\nPlease do not spam, it may take a few days to respond.`);
                 banEmbed.setColor("DarkRed");
                 await user.send({embeds: [banEmbed]});
                 await logChannels.important.send("DM succeeded!");
