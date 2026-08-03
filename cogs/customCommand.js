@@ -92,6 +92,9 @@ module.exports = (client, logChannels, config, clientState) => {
                 await message.reply("Please specify a parameter. Valid options are: " + options.sort().join(", ") + ".");
                 return;
             }
+            if (data.random) {
+               return processCmdData(data.random[~~(Math.random() * data.random.length)], message, args, offTopicFound); 
+            }
             if(!offTopicFound && config.noHelpCommandChannelList.includes(message.channel.id) && !util.hasRole(message.member, config.staffRoleList)) {
                 await message.reply("You cannot use assistance commands in off-topic channels unless you are staff. Please try again in <#"+config.botCmdsChannelId+">. If you believe this is a mistake, contact a bot maintainer.");
                 return;
