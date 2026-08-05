@@ -1,7 +1,7 @@
 var {EmbedBuilder, Embed} = require("discord.js");
 var util = require('../util');
 
-var commandList = ["ban", "yeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute"];
+var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute"];
 
 module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(command, args, message) {
@@ -21,7 +21,7 @@ module.exports = (client, logChannels, config, clientState) => {
             user = await message.guild.members.fetch(userId);
             if(!user) throw Error();
         } catch(err) {
-            if(!["ban","yeet"].includes(command) || !userId || userId.length > 19 || userId.length < 17) {
+            if(!["ban","yeet","unban","unyeet"].includes(command) || !userId || userId.length > 19 || userId.length < 17) {
                 await message.reply("Valid server member was not provided.");
                 return;
             }
@@ -29,22 +29,41 @@ module.exports = (client, logChannels, config, clientState) => {
                 await message.channel.send("no");
                 return;
             }
-            try {
-                await message.guild.bans.create(userId,{reason:args.slice(2).join(" ")});
-            } catch(err) {
-                await message.reply(`Server member was not found, unable to add user to ban list by ID.\nError info: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+            if(command=="ban"||command=="yeet") {
+                try {
+                    await message.guild.bans.create(userId,{reason:args.slice(2).join(" ")});
+                } catch(err) {
+                    await message.reply(`Server member was not found, unable to add user to ban list by ID.\nError info: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+                    return;
+                }
+                var funnyOptions = config.funnyOptions;
+                await message.reply("User" + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# User was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.");
+                let logEmbed = new EmbedBuilder();
+                logEmbed.setTitle(`.${command} was used to ban a user`);
+                logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+                logEmbed.setDescription(`Banned a user (user ID: ${userId}) from the server with the following reason:\n${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}\nThis user was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.`);
+                logEmbed.setFooter({text:"ID: " + userId});
+                logEmbed.setTimestamp();
+                await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
                 return;
             }
-            var funnyOptions = config.funnyOptions;
-            await message.reply("User" + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# User was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.");
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to ban a user`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Banned a user (user ID: ${userId}) from the server with the following reason:\n${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}\nThis user was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.`);
-			logEmbed.setFooter({text:"ID: " + userId});
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
+            if(command=="unban"||command=="unyeet") {
+                try {
+                    await message.guild.bans.remove(userId,{reason:args.slice(2).join(" ")});
+                } catch(err) {
+                    await message.reply(`Server member was not found, unable to remove user from ban list by ID.\nError info: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+                    return;
+                }
+                await message.reply("User removed from ban list.");
+                let logEmbed = new EmbedBuilder();
+                logEmbed.setTitle(`.${command} was used to unban a user`);
+                logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+                logEmbed.setDescription(`Unbanned a user (user ID: ${userId}) from the server with the following reason:\n${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}`);
+                logEmbed.setFooter({text:"ID: " + userId});
+                logEmbed.setTimestamp();
+                await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+                return;
+            }
         }
         if(util.hasRole(user, config.staffRoleList)) {
             await message.reply("FunkyHelper will not afflict any punishments upon staff, please do so manually.");
@@ -82,6 +101,11 @@ module.exports = (client, logChannels, config, clientState) => {
 			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
             return;
         }
+
+        if(command == "unban" || command == "unyeet") {
+            return await message.reply("The user is already in the server.");
+        }
+
         if(command=="scamkick") {
             if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
                 await message.channel.send("no");

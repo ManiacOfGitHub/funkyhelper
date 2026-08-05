@@ -1,4 +1,4 @@
-var {AuditLogEvent, EmbedBuilder, Events} = require("discord.js");
+var {AuditLogEvent, EmbedBuilder, Events, time} = require("discord.js");
 var ms = require("ms");
 
 module.exports = (client, logChannels, config, clientState) => {
@@ -205,6 +205,14 @@ module.exports = (client, logChannels, config, clientState) => {
         try {
             if(message.author.bot) return;
             if(config.excludeLogChannels.includes(message.channel.id)) return;
+            // Ghost Ping Notification
+            var mentions = message.mentions.users.filter(user=>user.id!=message.author.id&&!user.bot&&!user.system).toJSON();
+            var timeSinceSent = Date.now() - message.createdAt.getTime();
+            if(message.repliedUser) mentions.push(message.repliedUser.id);
+            if(mentions.length > 0 && (timeSinceSent <= config.ghostPingMaxTime * 1000)) {
+                await message.channel.send(`**Greetings, ${mentions.join(", ")}!**\n${message.author} ghost pinged you with the following content:\n\n${message.content}`);
+            }
+
             var description = `${message.content}\n\nMessage ID: ${message.id}`;
             if(message.attachments.size > 0) {
                 description += "\nThis message also has " + message.attachments.size.toString() + " attachments that will be logged separately.";

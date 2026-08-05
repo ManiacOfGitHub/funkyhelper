@@ -108,5 +108,6 @@
   "Your IP address is 127.0.0.1",
   "Call your mom. Or don't. I'm not the boss of you, I'm a Discord bot.",
   "Stay Funky and Happy Paying for Switch Games"
-  ]
+  ],
+  "ghostPingMaxTime": 60
 }
