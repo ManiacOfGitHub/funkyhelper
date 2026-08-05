@@ -1,4 +1,4 @@
-var {AuditLogEvent, EmbedBuilder, Events, time} = require("discord.js");
+var {AuditLogEvent, EmbedBuilder, Events, time, messageLink} = require("discord.js");
 var ms = require("ms");
 
 module.exports = (client, logChannels, config, clientState) => {
@@ -208,9 +208,19 @@ module.exports = (client, logChannels, config, clientState) => {
             // Ghost Ping Notification
             var mentions = message.mentions.users.filter(user=>user.id!=message.author.id&&!user.bot&&!user.system).toJSON();
             var timeSinceSent = Date.now() - message.createdAt.getTime();
-            if(message.repliedUser) mentions.push(message.repliedUser.id);
+            var description = "";
+            if(message.mentions.repliedUser) {
+                description += `Reply to ${messageLink(message.reference.channelId, message.reference.messageId, message.reference.guildId)}\n`;
+            }
+            description += message.content;
             if(mentions.length > 0 && (timeSinceSent <= config.ghostPingMaxTime * 1000)) {
-                await message.channel.send(`**Greetings, ${mentions.join(", ")}!**\n${message.author} ghost pinged you with the following content:\n\n${message.content}`);
+                let ghostPingNotification = new EmbedBuilder()
+                .setAuthor({name: message.member.displayName, iconURL: message.author.displayAvatarURL({extension:"png",size:2048})})
+                .setTitle(`Ghost Ping Detected!`)
+                .setDescription(description)
+                .setColor("Gold")
+                .setTimestamp();
+                await message.channel.send({content: mentions.join(", "), flags: [4096], embeds: [ghostPingNotification]});
             }
 
             var description = `${message.content}\n\nMessage ID: ${message.id}`;
