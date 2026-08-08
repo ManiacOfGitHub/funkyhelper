@@ -3,7 +3,7 @@ var {EmbedBuilder} = require("discord.js");
 var util = require('../util');
 var commandList = ["config", "addconfig","viewconfig"];
 
-module.exports = (client, logChannels, config, clientState) => {
+module.exports = (client, logChannels, config, botContext) => {
     async function onCommand(command, args, message) {
 	    if(!commandList.includes(command)) return;
 		if (!util.hasRole(message.member, config.allowRoleList)) {

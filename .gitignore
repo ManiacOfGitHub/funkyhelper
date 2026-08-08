@@ -8,3 +8,4 @@ stickyMessage.json
 lockedData.json
 *.traineddata
 birthdays.json
+data.db*

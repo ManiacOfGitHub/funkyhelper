@@ -17,8 +17,14 @@ const aliasDir = path.join(__dirname, "alias");
 
 var cogs = {};
 var cogsLoaded = false;
-var clientState = {};
+var botContext = {};
 var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "pull", "stop", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"];
+
+var sqlite = require('better-sqlite3');
+var db = sqlite('data.db');
+botContext.db = db;
+db.pragma('journal_mode = WAL');
+
 
 
 
@@ -30,6 +36,7 @@ client.on("messageCreate", async (message) => {
 		}
 		return;
 	}
+	
 	await cogs.stickyMessages.onMessage(message);
 
 	(async()=>{
@@ -39,6 +46,12 @@ client.on("messageCreate", async (message) => {
 			console.error(err);
 			await logChannels.important.send("An error occurred with the withdrawalScam cog. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 			await cogs.withdrawalScam.liftLock();
+		}
+		try {
+			await cogs.levels.onMessage(message);
+		} catch(err) {
+			console.error(err);
+			await logChannels.important.send("An error occurred with the levels cog.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 	})();
 
@@ -313,6 +326,16 @@ client.on("messageDelete", async (message) => {
 	}
 });
 
+function exit() {
+	console.log("Received command to exit... exiting safely!");
+	client.destroy();
+	db.close();
+	process.exit(0);
+}
+process.on('SIGINT', exit);
+process.on('SIGBREAK', exit);
+process.on('SIGTERM', exit);
+
 client.once(Events.ClientReady, async() => {
 	console.log('Ready! Logged in as ' + client.user.tag);
 	client.user.setPresence({
@@ -342,12 +365,12 @@ client.once(Events.ClientReady, async() => {
 		fs.mkdirSync(aliasDir, { recursive: true });
 	}
 
-	clientState.havePermission = havePermission;
+	botContext.havePermission = havePermission;
 
 	fs.readdirSync(path.join(__dirname, 'cogs')).forEach(file=>{
 		if(file.endsWith(".js")) {
 			var cogName = path.basename(file, '.js');
-			cogs[cogName] = (require(path.join(__dirname, 'cogs', cogName)))(client, logChannels, config, clientState);
+			cogs[cogName] = (require(path.join(__dirname, 'cogs', cogName)))(client, logChannels, config, botContext);
 		}
 	});
 
