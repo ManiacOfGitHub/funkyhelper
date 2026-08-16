@@ -240,7 +240,7 @@ module.exports = (client, logChannels, config, botContext) => {
         }
 
         if(["appealmute", "appealsmute"].includes(command)) {
-            if(!util.hasRole(message.member, config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
                 await message.channel.send("no");
                 return;
             }
@@ -263,7 +263,7 @@ module.exports = (client, logChannels, config, botContext) => {
         }
 
         if(["appealunmute", "appealsunmute"].includes(command)) {
-            if(!util.hasRole(message.member, config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
                 await message.channel.send("no");
                 return;
             }
