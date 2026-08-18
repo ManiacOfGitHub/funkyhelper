@@ -205,23 +205,23 @@ module.exports = (client, logChannels, config, clientState) => {
         try {
             if(message.author.bot) return;
             if(config.excludeLogChannels.includes(message.channel.id)) return;
-            // Ghost Ping Notification
-            var mentions = message.mentions.users.filter(user=>user.id!=message.author.id&&!user.bot&&!user.system).toJSON();
-            var timeSinceSent = Date.now() - message.createdAt.getTime();
-            var description = "";
-            if(message.mentions.repliedUser) {
-                description += `Reply to ${messageLink(message.reference.channelId, message.reference.messageId, message.reference.guildId)}\n`;
-            }
-            description += message.content;
-            if(mentions.length > 0 && (timeSinceSent <= config.ghostPingMaxTime * 1000)) {
-                let ghostPingNotification = new EmbedBuilder()
-                .setAuthor({name: message.member.displayName, iconURL: message.author.displayAvatarURL({extension:"png",size:2048})})
-                .setTitle(`Ghost Ping Detected!`)
-                .setDescription(description)
-                .setColor("Gold")
-                .setTimestamp();
-                await message.channel.send({content: mentions.join(", "), flags: [4096], embeds: [ghostPingNotification]});
-            }
+            //// Ghost Ping Notification
+            //var mentions = message.mentions.users.filter(user=>user.id!=message.author.id&&!user.bot&&!user.system).toJSON();
+            //var timeSinceSent = Date.now() - message.createdAt.getTime();
+            //var description = "";
+            //if(message.mentions.repliedUser) {
+            //    description += `Reply to ${messageLink(message.reference.channelId, message.reference.messageId, message.reference.guildId)}\n`;
+            //}
+            //description += message.content;
+            //if(mentions.length > 0 && (timeSinceSent <= config.ghostPingMaxTime * 1000)) {
+            //    let ghostPingNotification = new EmbedBuilder()
+            //    .setAuthor({name: message.member.displayName, iconURL: message.author.displayAvatarURL({extension:"png",size:2048})})
+            //    .setTitle(`Ghost Ping Detected!`)
+            //    .setDescription(description)
+            //    .setColor("Gold")
+            //    .setTimestamp();
+            //    await message.channel.send({content: mentions.join(", "), flags: [4096], embeds: [ghostPingNotification]});
+            //}
 
             var description = `${message.content}\n\nMessage ID: ${message.id}`;
             if(message.attachments.size > 0) {
