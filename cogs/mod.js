@@ -1,7 +1,8 @@
 var {EmbedBuilder, Embed} = require("discord.js");
 var util = require('../util');
 
-var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute"];
+var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout'];
+var ms = require('ms');
 
 module.exports = (client, logChannels, config, clientState) => {
     async function onCommand(command, args, message) {
@@ -326,6 +327,98 @@ module.exports = (client, logChannels, config, clientState) => {
 			logEmbed.setTitle(`.${command} was used to give \`.modping\` access back to a user.`);
 			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
 			logEmbed.setDescription(`Removed modpingmute role from ${user.user.username} (user ID: ${userId}).`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
+
+        if(command=='timeout') {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+            try {
+                var timeoutTime = ms(args[2]);
+                if(!Number.isFinite(timeoutTime)) {
+                    await message.reply("Invalid (or no) time specified.");
+                    return;
+                }
+                if(timeoutTime < 1000) {
+                    timeoutTime *= 1000;
+                }
+                if(timeoutTime < ms('5s')) {
+                    await message.reply("Time cannot be shorter than 5 seconds");
+                    return;
+                }
+                if(timeoutTime > ms('28d')) {
+                    await message.reply("Time cannot be longer than 28 days.");
+                    return;
+                }
+            } catch(err) {
+                await message.reply("Invalid (or no) time specified.");
+                return;
+            }
+
+            try {
+                await user.timeout(timeoutTime, args.slice(3).join(" "));
+            } catch(err) {
+                await message.reply("Failed to time out member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+
+            try {
+                await user.fetch();
+                let timeoutEmbed = new EmbedBuilder();
+                timeoutEmbed.setTitle("Moderation Action");
+                timeoutEmbed.setDescription(`**You have been timed out in ${message.guild.name} for ${ms(timeoutTime, {long: true})}.**\n**${args.length>2?("Reason: " + args.slice(3).join(" ")):"No reason was provided."}**\nYou will be able to speak in the server on <t:${~~(user.communicationDisabledUntilTimestamp/1000)}:f>.`);
+                timeoutEmbed.setColor("DarkRed");
+                await user.send({embeds: [timeoutEmbed]});
+                await logChannels.important.send("DM succeeded!");
+            } catch(err) {
+                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+            }
+            
+            var funnyOptions = config.funnyOptions;
+            await message.reply(user.user.username + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# Timeout successful.");
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to time out a user.`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Timed out ${user.user.username} (user ID: ${userId}) for ${ms(timeoutTime, {long: true})}. ${args.length>2?("Reason: " + args.slice(3).join(" ")):"No reason was provided."}`);
+			logEmbed.setTimestamp();
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+            return;
+        }
+
+        if(command=='untimeout') {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+
+            try {
+                await user.timeout(null, args.slice(2).join(" "));
+            } catch(err) {
+                await message.reply("Failed to remove time out from member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+
+            try {
+                await user.fetch();
+                let timeoutEmbed = new EmbedBuilder();
+                timeoutEmbed.setTitle("Moderation Action");
+                timeoutEmbed.setDescription(`**Good news! You have been untimed out in ${message.guild.name}!**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nWelcome back to the server!`);
+                timeoutEmbed.setColor("Green");
+                await user.send({embeds: [timeoutEmbed]});
+                await logChannels.important.send("DM succeeded!");
+            } catch(err) {
+                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+            }
+
+            await message.reply("User's timeout was removed.");
+            let logEmbed = new EmbedBuilder();
+			logEmbed.setTitle(`.${command} was used to remove a timeout from a user.`);
+			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setDescription(`Untimed out ${user.user.username} (user ID: ${userId}). ${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}`);
 			logEmbed.setTimestamp();
 			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
             return;
