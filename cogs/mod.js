@@ -1,7 +1,7 @@
 var {EmbedBuilder, Embed} = require("discord.js");
 var util = require('../util');
 
-var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout'];
+var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout', 'closeticketdm'];
 var ms = require('ms');
 
 module.exports = (client, logChannels, config, botContext) => {
@@ -422,6 +422,23 @@ module.exports = (client, logChannels, config, botContext) => {
 			logEmbed.setTimestamp();
 			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
             return;
+        }
+
+        if(command=="closeticketdm") {
+            try {
+                await user.fetch();
+                let ticketClosedEmbed = new EmbedBuilder();
+                let reason = args.slice(2).join(" ");
+                if(reason == "hbhelp") {
+                    reason = "Tickets are not to be used for homebrew assistance. Please ask in #help-general or a different relevant help channel and be patient.";
+                }
+                ticketClosedEmbed.setTitle(`Your ticket has been closed.`);
+                ticketClosedEmbed.setDescription(`A ticket that you opened was closed for the following reason: ${reason||"No reason was provided."}`);
+                await user.send({embeds:[ticketClosedEmbed]});
+                await message.reply("DM successful!");
+            } catch(err) {
+                await message.reply("User could not be DM'd.")
+            }
         }
     }
     return {
