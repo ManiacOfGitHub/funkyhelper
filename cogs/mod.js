@@ -1,7 +1,7 @@
 var {EmbedBuilder, Embed} = require("discord.js");
 var util = require('../util');
 
-var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout', 'closeticketdm'];
+var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout', 'closeticketdm', 'ctdm'];
 var ms = require('ms');
 
 module.exports = (client, logChannels, config, botContext) => {
@@ -424,7 +424,7 @@ module.exports = (client, logChannels, config, botContext) => {
             return;
         }
 
-        if(command=="closeticketdm") {
+        if(["closeticketdm","ctdm"].includes(command)) {
             try {
                 await user.fetch();
                 let ticketClosedEmbed = new EmbedBuilder();
@@ -439,6 +439,7 @@ module.exports = (client, logChannels, config, botContext) => {
             } catch(err) {
                 await message.reply("User could not be DM'd.")
             }
+			return;
         }
     }
     return {
