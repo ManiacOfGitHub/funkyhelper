@@ -31,14 +31,14 @@ db.pragma('journal_mode = WAL');
 client.on("messageCreate", async (message) => {
 	if (!message.guild || message.author.bot) return;
 	if(!cogsLoaded) {
-		if(message.content.startsWith(".")) {
+		if(message.content && message.content.startsWith(".")) {
 			await message.reply("Please wait before sending any commands, the bot is currently restarting...");
 		}
 		return;
 	}
 	
 	await cogs.stickyMessages.onMessage(message);
-
+    if(!message.content) return;
 	(async()=>{
 		try {
 			await cogs.withdrawalScam.onMessage(message);
