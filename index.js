@@ -8,7 +8,7 @@ const web = require('./web');
 
 var config = require('./config.json');
 const { log } = require('console');
-var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.activeModeratorsId]}});
+var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.activeModeratorsId]}});
 var matchmakingTimer = 0;
 var logChannels = {normal: null, important: null};
 
@@ -38,7 +38,7 @@ client.on("messageCreate", async (message) => {
 	}
 	
 	await cogs.stickyMessages.onMessage(message);
-    if(!message.content) return;
+    if(!message.content && message.content !== "") return;
 	(async()=>{
 		try {
 			await cogs.withdrawalScam.onMessage(message);
