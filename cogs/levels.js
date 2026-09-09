@@ -1,7 +1,7 @@
-var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "rank"];
+var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "rank", "fixroles"];
 var db, expFetcher, userUpdateFunction, levelUpChannel;
 var calculateLevel = exp=>exp?~~(exp/100)+1:0;
-var {EmbedBuilder} = require('discord.js');
+var {EmbedBuilder, AttachmentBuilder} = require('discord.js');
 var util = require('../util');
 var canvas = require('canvas');
 var fs = require('fs');
@@ -99,6 +99,7 @@ module.exports = (client, logChannels, config, botContext)=>{
             var fetchedData = expFetcher.get(member.id);
             var userExp = fetchedData?.exp || 0;
             if(isNaN(userExp)) userExp = 0;
+            var userProgress = calculateProgress(userExp);
 
             var rankCanvas = canvas.createCanvas(1094, 272);
             var ctx = rankCanvas.getContext('2d');
@@ -121,13 +122,43 @@ module.exports = (client, logChannels, config, botContext)=>{
             ctx.arc(136, 136, 128, 0, Math.PI * 2);
             ctx.stroke();
 
-            ctx.font = 'normal 55px "Roboto Bold"';
+            var fontSize = 70;
+            ctx.font = `normal ${fontSize}px "Roboto Bold"`;
+            while(ctx.measureText(member.displayName).width > 500) {
+                fontSize--;
+                ctx.font = `normal ${fontSize}px "Roboto Bold"`;
+            }
             ctx.fillStyle = "white";
-            ctx.fillText(member.displayName, 280, 164);
+            ctx.fillText(member.displayName, 280, 153, 500);
+            
+            var percentage = userProgress.xpIntoLevel / (userProgress.level?100:1);
+            drawLevelBar(ctx, percentage);
 
-            var out = fs.createWriteStream(__dirname + '/test.png');
-            rankCanvas.createPNGStream().pipe(out);
+            ctx.save();
+            ctx.font = 'normal 20px "Roboto Bold"';
+            ctx.textAlign = 'right';
+            ctx.fillStyle = "rgb(93,99,111)";
+            ctx.fillText(`EXP: ${userExp}/${userProgress.xpForNextLevel}`, 970, 164);
+            ctx.font = 'normal 30px "Roboto Bold"';
+            ctx.fillStyle = "rgb(193,199,211)";
+            ctx.fillText(`LEVEL ${userProgress.level}`, 970, 140);
+            ctx.restore();
 
+            var stream = rankCanvas.createPNGStream();
+            var attachment = new AttachmentBuilder(stream,{name: member.user.id+"_rank.png"});
+            message.reply({files:[attachment]});
+        }
+        if(command=="fixroles") {
+            var member, userId;
+            try {
+                userId = args[1].match(/\d+/).join("");
+                member = await message.guild.members.fetch(userId);
+                if(!member) throw Error();
+            } catch(err) {
+                member = message.member;
+            }
+            await updateRoles(member);
+            await message.reply("Attempted to add roles based on current XP!");
         }
     }
 
@@ -179,6 +210,36 @@ module.exports = (client, logChannels, config, botContext)=>{
         }
         if(!addedARole) return false;
         return topRoleId;
+    }
+
+    function drawLevelBar(ctx, percent) {
+        drawCylinder(ctx, "rgb(93,99,111)", 650);
+        drawCylinder(ctx, "lightgreen", ~~(percent*650));
+    }
+
+    function drawCylinder(ctx, color, lengthOfGap) {
+        ctx.beginPath();
+        ctx.fillStyle = color; 
+        ctx.arc(300, 194, 20, Math.PI/2, -Math.PI/2, false);
+        ctx.fill();
+
+        ctx.fillRect(300, 174, lengthOfGap, 40);
+
+        ctx.arc(300+lengthOfGap, 194, 20, Math.PI/2, -Math.PI/2, true);
+        ctx.fill();
+
+        ctx.closePath();
+    }
+
+    function calculateProgress(exp) {
+        var level = calculateLevel(exp);
+        var xpIntoLevel = level > 0 ? ((exp - 1) % 100) : 0;
+        var xpForNextLevel = level * 100 + 1;
+        return {
+            level,
+            xpIntoLevel,
+            xpForNextLevel
+        };
     }
 
     return {
