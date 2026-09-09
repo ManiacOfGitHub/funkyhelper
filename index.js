@@ -382,7 +382,6 @@ client.once(Events.ClientReady, async() => {
 			commandList.push(...cogs[cogName].commandList);
 		}
 	}
-	console.log(commandList.length);
 
 	cogsLoaded = true;
 
