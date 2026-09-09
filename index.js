@@ -167,7 +167,7 @@ client.on("messageCreate", async (message) => {
 		});
 	}
 
-	if (message.content === ".test") {
+	if (message.content.startsWith(".test")) {
 		const embed = new EmbedBuilder().setDescription("This is a test message.");
 		message.channel.send({ embeds: [embed] });
 	}
@@ -359,6 +359,7 @@ client.once(Events.ClientReady, async() => {
 			commandList.push(...cogs[cogName].commandList);
 		}
 	}
+	console.log(commandList.length);
 
 	cogsLoaded = true;
 
