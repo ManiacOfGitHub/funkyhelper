@@ -1,12 +1,12 @@
 var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "rank", "fixroles"];
 var db, expFetcher, userUpdateFunction, levelUpChannel;
-var calculateLevel = exp=>exp?~~(exp/100)+1:0;
 var {EmbedBuilder, AttachmentBuilder} = require('discord.js');
 var util = require('../util');
 var canvas = require('canvas');
 var fs = require('fs');
 
 module.exports = (client, logChannels, config, botContext)=>{
+    var calculateLevel = exp=>exp>=config.firstRankExpLength?~~((exp-config.firstRankExpLength)/config.rankExpLength)+1:0;
     async function onReady() {
         db = botContext.db;
         db.prepare(`
@@ -70,6 +70,34 @@ module.exports = (client, logChannels, config, botContext)=>{
             await message.reply({content:`${user}'s experience was set to ${exp}! Their level is now ${calculateLevel(exp)}.`});
             return;
         }
+        if(command=="setlevel") {
+            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
+                await message.channel.send("no");
+                return;
+            }
+            if(args.length < 3) {
+                await message.reply(`Not enough arguments.\nUsage: .${command} (user) (exp)`);
+                return;
+            }
+            var user, userId;
+            try {
+                userId = args[1].match(/\d+/).join("");
+                user = await message.guild.members.fetch(userId);
+                if(!user) throw Error();
+            } catch(err) {
+                await message.reply("Valid server member was not provided.");
+                return;
+            }
+            var level = parseInt(args[2]);
+            if(!Number.isInteger(exp)) {
+                await message.reply("Invalid level value provided.");
+                return;
+            }
+            var exp = (level - 1) * config.rankExpLength + (level ? config.firstRankExpLength : 0);
+            await setExp(user, exp);
+            await message.reply({content:`${user}'s level was set to ${level}! Their experience is now ${exp}.`});
+            return;
+        }
         if(command=="deluserlvls") {
             if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
                 await message.channel.send("no");
@@ -131,7 +159,7 @@ module.exports = (client, logChannels, config, botContext)=>{
             ctx.fillStyle = "white";
             ctx.fillText(member.displayName, 280, 153, 500);
             
-            var percentage = userProgress.xpIntoLevel / (userProgress.level?100:1);
+            var percentage = userProgress.xpIntoLevel / (userProgress.level?config.rankExpLength:config.firstRankExpLength);
             drawLevelBar(ctx, percentage);
 
             ctx.save();
@@ -173,7 +201,7 @@ module.exports = (client, logChannels, config, botContext)=>{
             var roleAddedId = await updateRoles(member);
             var description = `**Congratulations!**\n${member} is now level ${newLevel}!!!`;
             if(roleAddedId) {
-                description += `\nThey have now also earned <@&${roleAddedId}> (and any roles beneath it)! Yippee!`;
+                description += `\nThey have now also earned <@&${roleAddedId}>! Yippee!`;
             }
             let levelUpEmbed = new EmbedBuilder()
             .setAuthor({name: member.displayName, iconURL: member.user.displayAvatarURL({extension:"png",size:2048})})
@@ -233,8 +261,8 @@ module.exports = (client, logChannels, config, botContext)=>{
 
     function calculateProgress(exp) {
         var level = calculateLevel(exp);
-        var xpIntoLevel = level > 0 ? ((exp - 1) % 100) : 0;
-        var xpForNextLevel = level * 100 + 1;
+        var xpIntoLevel = level > 0 ? ((exp - config.firstRankExpLength) % config.rankExpLength) : (exp % config.firstRankExpLength);
+        var xpForNextLevel = level * config.rankExpLength + config.firstRankExpLength;
         return {
             level,
             xpIntoLevel,
