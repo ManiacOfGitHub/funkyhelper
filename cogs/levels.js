@@ -1,4 +1,4 @@
-var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "rank", "fixroles"];
+var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "rank", "fixroles", "setlevel"];
 var db, expFetcher, userUpdateFunction, levelUpChannel;
 var {EmbedBuilder, AttachmentBuilder} = require('discord.js');
 var util = require('../util');
@@ -6,7 +6,7 @@ var canvas = require('canvas');
 var fs = require('fs');
 
 module.exports = (client, logChannels, config, botContext)=>{
-    var calculateLevel = exp=>exp>=config.firstRankExpLength?~~((exp-config.firstRankExpLength)/config.rankExpLength)+1:0;
+    var calculateLevel = exp=>exp>=config.firstRankExpLength?~~(exp/config.rankExpLength)+1:0;
     async function onReady() {
         db = botContext.db;
         db.prepare(`
@@ -89,11 +89,11 @@ module.exports = (client, logChannels, config, botContext)=>{
                 return;
             }
             var level = parseInt(args[2]);
-            if(!Number.isInteger(exp)) {
+            if(!Number.isInteger(level)) {
                 await message.reply("Invalid level value provided.");
                 return;
             }
-            var exp = (level - 1) * config.rankExpLength + (level ? config.firstRankExpLength : 0);
+            var exp = (level > 1 ? ((level - 1) * config.rankExpLength) : config.firstRankExpLength * level);
             await setExp(user, exp);
             await message.reply({content:`${user}'s level was set to ${level}! Their experience is now ${exp}.`});
             return;
@@ -261,8 +261,8 @@ module.exports = (client, logChannels, config, botContext)=>{
 
     function calculateProgress(exp) {
         var level = calculateLevel(exp);
-        var xpIntoLevel = level > 0 ? ((exp - config.firstRankExpLength) % config.rankExpLength) : (exp % config.firstRankExpLength);
-        var xpForNextLevel = level * config.rankExpLength + config.firstRankExpLength;
+        var xpIntoLevel = level > 0 ? (exp % config.rankExpLength) : (exp % config.firstRankExpLength);
+        var xpForNextLevel = level > 0 ? (level * config.rankExpLength) : config.firstRankExpLength;
         return {
             level,
             xpIntoLevel,
