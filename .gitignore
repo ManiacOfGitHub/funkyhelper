@@ -8,3 +8,5 @@ stickyMessage.json
 lockedData.json
 *.traineddata
 birthdays.json
+data.db*
+amariExport.json

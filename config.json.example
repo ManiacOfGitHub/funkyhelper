@@ -109,5 +109,7 @@
   "Call your mom. Or don't. I'm not the boss of you, I'm a Discord bot.",
   "Stay Funky and Happy Paying for Switch Games"
   ],
-  "ghostPingMaxTime": 60
+  "ghostPingMaxTime": 60,
+  "levelUpChannelId": "1461160222784487555",
+  "levelUpRoles": [[1,"1461160220033159359"],[2,"1461160219995279395"],[5,"1461160220020572257"]]
 }

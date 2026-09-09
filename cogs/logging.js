@@ -1,7 +1,7 @@
 var {AuditLogEvent, EmbedBuilder, Events, time, messageLink} = require("discord.js");
 var ms = require("ms");
 
-module.exports = (client, logChannels, config, clientState) => {
+module.exports = (client, logChannels, config, botContext) => {
     async function onReady() {
         client.on(Events.GuildAuditLogEntryCreate, auditLogEvent);
         client.on(Events.MessageDelete, messageDeleteHandler);

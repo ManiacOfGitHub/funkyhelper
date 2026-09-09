@@ -4,7 +4,7 @@ var util = require('../util');
 var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout', 'closeticketdm', 'ctdm'];
 var ms = require('ms');
 
-module.exports = (client, logChannels, config, clientState) => {
+module.exports = (client, logChannels, config, botContext) => {
     async function onCommand(command, args, message) {
         if(!commandList.includes(command)) return;
         if(!config.fullPermsMode) {
