@@ -215,7 +215,7 @@ module.exports = (client, logChannels, config, botContext)=>{
                 let username;
                 try {
                     let member = await message.guild.members.fetch(user.user_id);
-                    username = member.username;
+                    username = member.user.username;
                 } catch(err) {}
                 description += `**#${rank}: <@${user.user_id}>** ${username?"("+username+")":""}\n\tLevel ${userProgress.level}\n\tEXP: ${user.exp}/${userProgress.xpForNextLevel}\n\n`;
             }
