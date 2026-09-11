@@ -5,7 +5,6 @@ var util = require('../util');
 var canvas = require('canvas');
 var fs = require('fs');
 var fontList = require('font-list');
-var cron = require('node-cron');
 
 module.exports = (client, logChannels, config, botContext)=>{
     var calculateLevel = exp=>exp>=config.firstRankExpLength?~~(exp/config.rankExpLength)+1:0;
