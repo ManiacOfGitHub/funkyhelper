@@ -212,7 +212,12 @@ module.exports = (client, logChannels, config, botContext)=>{
             for(let rank = 1; rank <= topTen.length; rank++) {
                 let user = topTen[rank-1];
                 let userProgress = calculateProgress(user.exp);
-                description += `**#${rank}: <@${user.user_id}>**\n\tLevel ${userProgress.level}\n\tEXP: ${user.exp}/${userProgress.xpForNextLevel}\n\n`;
+                let username;
+                try {
+                    let member = await message.guild.members.fetch(user.user_id);
+                    username = member.username;
+                } catch(err) {}
+                description += `**#${rank}: <@${user.user_id}>** ${username?"("+username+")":""}\n\tLevel ${userProgress.level}\n\tEXP: ${user.exp}/${userProgress.xpForNextLevel}\n\n`;
             }
             var leaderboardEmbed = new EmbedBuilder();
             leaderboardEmbed.setTitle("Leaderboard");
