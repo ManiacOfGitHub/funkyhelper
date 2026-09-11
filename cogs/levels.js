@@ -1,10 +1,11 @@
-var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "rank", "fixroles", "setlevel"];
-var db, expFetcher, userUpdateFunction, levelUpChannel;
+var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "rank", "fixroles", "setlevel", "leaderboard", "lb"];
+var db, expFetcher, userUpdateFunction, levelUpChannel, lbPositionFunction;
 var {EmbedBuilder, AttachmentBuilder} = require('discord.js');
 var util = require('../util');
 var canvas = require('canvas');
 var fs = require('fs');
 var fontList = require('font-list');
+var cron = require('node-cron');
 
 module.exports = (client, logChannels, config, botContext)=>{
     var calculateLevel = exp=>exp>=config.firstRankExpLength?~~(exp/config.rankExpLength)+1:0;
@@ -22,6 +23,11 @@ module.exports = (client, logChannels, config, botContext)=>{
             VALUES (:user_id, :exp)
             ON CONFLICT(user_id) DO UPDATE SET
                 exp = excluded.exp
+        `);
+        lbPositionFunction = db.prepare(`
+            WITH leaderboard AS (
+                SELECT user_id, exp, RANK() OVER (ORDER BY exp DESC) AS rank FROM user_exp
+            ) SELECT rank FROM leaderboard WHERE user_id = ?
         `);
         levelUpChannel = await client.channels.fetch(config.levelUpChannelId);
         if(!(await fontList.getFonts()).map(f=>f.replaceAll("\"","")).includes("Roboto")) {
@@ -127,8 +133,10 @@ module.exports = (client, logChannels, config, botContext)=>{
             } catch(err) {
                 member = message.member;
             }
-            var fetchedData = expFetcher.get(member.id);
-            var userExp = fetchedData?.exp || 0;
+            var fetchedExpData = expFetcher.get(member.id);
+            var fetchedRankData = lbPositionFunction.get(member.id);
+            var userExp = fetchedExpData?.exp || 0;
+            var rank = fetchedRankData?.rank || NaN;
             if(isNaN(userExp)) userExp = 0;
             var userProgress = calculateProgress(userExp);
 
@@ -173,6 +181,12 @@ module.exports = (client, logChannels, config, botContext)=>{
             ctx.font = 'normal 30px "Roboto"';
             ctx.fillStyle = "rgb(193,199,211)";
             ctx.fillText(`LEVEL ${userProgress.level}`, 970, 140);
+            if(!isNaN(rank)) {
+                ctx.font = 'normal 25px "Roboto"';
+                ctx.fillStyle = "white";
+                ctx.textAlign = "left";
+                ctx.fillText(`#${rank} on Leaderboard`, 300, 250);
+            }
             ctx.restore();
 
             var stream = rankCanvas.createPNGStream();
@@ -190,6 +204,22 @@ module.exports = (client, logChannels, config, botContext)=>{
             }
             await updateRoles(member);
             await message.reply("Attempted to add roles based on current XP!");
+        }
+
+        if(["leaderboard", "lb"].includes(command)) {
+            var topTen = db.prepare(`SELECT CAST(user_id AS varchar) AS user_id,exp from user_exp ORDER BY exp DESC LIMIT 10`).all();
+            console.log(topTen);
+            var description = "";
+            for(let rank = 1; rank <= topTen.length; rank++) {
+                let user = topTen[rank-1];
+                let userProgress = calculateProgress(user.exp);
+                description += `**#${rank}: <@${user.user_id}>**\n\tLevel ${userProgress.level}\n\tEXP: ${user.exp}/${userProgress.xpForNextLevel}\n\n`;
+            }
+            var leaderboardEmbed = new EmbedBuilder();
+            leaderboardEmbed.setTitle("Leaderboard");
+            leaderboardEmbed.setDescription(description);
+            leaderboardEmbed.setColor("Gold");
+            await message.reply({embeds:[leaderboardEmbed]});
         }
     }
 
