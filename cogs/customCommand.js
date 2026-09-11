@@ -127,7 +127,7 @@ module.exports = (client, logChannels, config, botContext) => {
         } catch(err) {
             var isOffTopic = false;
             if(!data.startsWith) return;
-            if(data.startsWith("offtopic ")) {
+            if(data.toLowerCase().startsWith("offtopic ")) {
                 isOffTopic = true;
                 data = data.split(" ").slice(1).join(" ");
             }
