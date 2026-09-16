@@ -61,12 +61,41 @@ client.on("messageCreate", async (message) => {
 
 	if(message.content.startsWith(".")) {
 		for(let cogName in cogs) {
+			// Legacy Command Handler, will be removed once all cogs have been migrated.
 			if(cogs[cogName].hasOwnProperty('onCommand')) {
 				try {
 					await cogs[cogName].onCommand(commandName, args, message);
 				} catch(err) {
 					console.error(err);
 					await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+				}
+			}
+			
+			// New Fancy Command Handler! Yippee!
+			if(cogs[cogName].hasOwnProperty('commands')) {
+				for(let cogCommandName in cogs[cogName].commands) {
+					let cogCommand = cogs[cogName].commands[cogCommandName]
+					if(!cogCommand.hasOwnProperty('prefix') || !cogCommand.prefix.hasOwnProperty('name')) continue;
+					let matchesCmd = cogCommand.prefix.name == commandName;
+					if(!matchesCmd && cogCommand.prefix.hasOwnProperty('aliases')) {
+						matchesCmd = cogCommand.prefix.aliases.hasOwnProperty('includes') && cogCommand.prefix.aliases.includes(commandName);
+					}
+					if(!matchesCmd) continue;
+
+
+					let cogArgs = {};
+					// Argument processing goes here, will implement later!
+					if(!cogCommand.hasOwnProperty('handler')) {
+						await message.reply(`Error: \`.${commandName}\` has no command handler!`);
+						continue;
+					}
+					try {
+						await cogCommand.handler(false, cogArgs, message);
+					} catch(err) {
+						console.error(err);
+						await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+						await message.reply(`An unhandled exception occurred when executing the command. It has been logged in a staff-only channel. Please contact a Bot Maintainer for more information.`);
+					}
 				}
 			}
 		}
@@ -178,11 +207,6 @@ client.on("messageCreate", async (message) => {
 			const commandList = files.filter(file => file.endsWith('.botcmd')).map(file => file.replace('.botcmd', '')).sort();
 			message.reply("Commands: " + (commandList.length ? commandList.join(", ") : "None"));
 		});
-	}
-
-	if (message.content.startsWith(".test")) {
-		const embed = new EmbedBuilder().setDescription("This is a test message.");
-		message.channel.send({ embeds: [embed] });
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".matchmaking") {
@@ -326,6 +350,39 @@ client.on("messageDelete", async (message) => {
 	}
 });
 
+client.on(Events.InteractionCreate, async (interaction) => {
+	if(!interaction.isChatInputCommand()) return;
+	if(!cogsLoaded) {
+		await interaction.reply("Please wait before sending any commands, the bot is currently restarting...");
+		return;
+	}
+	for(let cogName in cogs) {
+		if(cogs[cogName].hasOwnProperty('commands')) {
+			if(!cogs[cogName].commands.hasOwnProperty(interaction.commandName)) continue;
+			let cogCommand = cogs[cogName].commands[interaction.commandName];
+			if(!cogCommand.hasOwnProperty('slash')) continue;
+			let cogArgs = {};
+			// Argument processing goes here, will implement later!
+			if(!cogCommand.hasOwnProperty('handler')) {
+				await interaction.reply(`Error: \`.${commandName}\` has no command handler!`);
+				continue;
+			}
+			try {
+				await cogCommand.handler(true, cogArgs, interaction);
+			} catch(err) {
+				console.error(err);
+				await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+				let errorMessage = `An unhandled exception occurred when executing the command. It has been logged in a staff-only channel. Please contact a Bot Maintainer for more information.`;
+				if(interaction.replied) {
+					await interaction.followUp(errorMessage);
+				} else {
+					await interaction.reply(errorMessage);
+				}
+			}
+		}
+	}
+});
+
 function exit() {
 	console.log("Received command to exit... exiting safely!");
 	client.destroy();
@@ -378,8 +435,12 @@ client.once(Events.ClientReady, async() => {
 		if(cogs[cogName].hasOwnProperty("onReady")) {
 			await cogs[cogName].onReady();
 		}
+		// TODO: Remove once all commands are migrated to new system.
 		if(cogs[cogName].hasOwnProperty("commandList")) {
 			commandList.push(...cogs[cogName].commandList);
+		}
+		if(cogs[cogName].hasOwnProperty("commands")) {
+			commandList.push(...Object.keys(cogs[cogName].commands));
 		}
 	}
 
