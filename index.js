@@ -99,7 +99,29 @@ async function msgCreateHandler(message) {
 
 
 					let cogArgs = {};
-					// Argument processing goes here, will implement later!
+					let argIndex = 1;
+					if(Array.isArray(cogCommand.prefix.params)) {
+						for(var param of cogCommand.prefix.params) {
+							let initalValue;
+							switch(param.type) {
+								case "text":
+									initalValue = args[argIndex];
+									argIndex++;
+									break;
+								default:
+									throw new Error("Invalid parameter type");
+							}
+							let processedValue;
+							if(param.process) {
+								processedValue = await param.process(initalValue);
+							} else {
+								processedValue = initalValue;
+							}
+							cogArgs[param.name] = processedValue;
+						}
+					}
+
+
 					if(!cogCommand.hasOwnProperty('handler')) {
 						await message.reply(`Error: \`.${commandName}\` has no command handler!`);
 						continue;
@@ -245,23 +267,6 @@ async function msgCreateHandler(message) {
 		await message.channel.send({content:`<@&${config.activeModeratorsId}>\n\n**${message.member} has pinged you for moderation purposes.**`, allowedMentions:{roles:[config.activeModeratorsId]}});
 	}
 
-	if(message.content.split(" ")[0].toLowerCase() == ".pull") {
-		if (!config.botOwners.includes(message.member.id)) {
-			return message.reply("You do not have permission to pull from the repo. (You must be part of the `botOwners` list)");
-		}
-		exec("git pull", async(err, stdout)=>{
-			if(err) {
-				console.error(err);
-				return message.reply("Git pull failed somehow. Idk");
-			}
-			if(stdout) {
-				await message.reply(stdout);
-			}
-			await message.reply("Bot is now restarting... (unless you don't have monit lol)");
-			exec("monit restart funkyhelper");
-		});
-	}
-
 	if(message.content.split(" ")[0].toLowerCase() == ".stop") {
 		if (!config.botOwners.includes(message.member.id)) {
 			return message.reply("You do not have permission to restart the bot.");
@@ -362,6 +367,11 @@ async function interactionCreateHandler(interaction) {
 			let cogCommand = cogs[cogName].commands[interaction.commandName];
 			if(!cogCommand.hasOwnProperty('slash')) continue;
 			let cogArgs = {};
+			if(Array.isArray(interaction.options.data)) {
+				for(var param of interaction.options.data) {
+					cogArgs[param.name] = param.value;
+				}
+			}
 			// Argument processing goes here, will implement later!
 			if(!cogCommand.hasOwnProperty('handler')) {
 				await interaction.reply(`Error: \`.${commandName}\` has no command handler!`);
@@ -395,7 +405,7 @@ process.on('SIGTERM', exit);
 
 async function clientReady() {
 	console.log('Ready! Logged in as ' + client.user.tag);
-	console.log("Message Content Intent Access: " + msgContentIntent.toString().toUpperCase() + (config.attemptPrivilegedIntents ? " (Disabled in config)" : ""));
+	console.log("Message Content Intent Access: " + msgContentIntent.toString().toUpperCase() + (!config.attemptPrivilegedIntents ? " (Disabled in config)" : ""));
 	client.user.setPresence({
 		activities: [{
 			name: "Stay Funky and Happy Modding!",
@@ -451,8 +461,6 @@ async function clientReady() {
 
 	setInterval(processTimers, 1000);
 };
-
-client.login(config.token);
 
 (async()=>{
 	try {

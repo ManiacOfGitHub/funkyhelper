@@ -1,4 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require("discord.js");
+var util = require('../util')
+var child_process = require('child_process');
 var matchmakingTimer = 0;
 
 module.exports = (client, logChannels, config, botContext) => {
@@ -20,6 +22,33 @@ module.exports = (client, logChannels, config, botContext) => {
 			matchmakingTimer = 60 * 10;
 			await ctx.reply({content:"<@&"+config.matchmakingRoleId+">\n**Someone would like to play!**\n-# If you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.", allowedMentions: {roles: [config.matchmakingRoleId]}});
 		}
+    }
+
+    async function pullCmdHandler(isSlash, params, ctx) {
+        let reply = util.ctxReplier(ctx, isSlash);
+        if(!config.botOwners.includes(ctx.member.id)) {
+			return reply("You do not have permission to pull from the repo. (You must be part of the `botOwners` list)");
+		}
+        if(isSlash) await ctx.deferReply({flags: MessageFlags.Ephemeral});
+        try {
+            var stdout = child_process.execSync("git pull").toString();
+        } catch(err) {
+            console.error(err);
+            return await reply("Git pull failed somehow. Idk");
+        }
+        if(stdout) await reply({content: stdout, flags: MessageFlags.Ephemeral});
+        if(params.npm) {
+            await reply("Updating npm packages...");
+            try {
+                var stdout = child_process.execSync("npm install").toString();
+            } catch(err) {
+                console.error(err);
+                await reply("npm install failed somehow. Idk");
+            }
+            if(stdout) await reply({content: stdout, flags: MessageFlags.Ephemeral});
+        }
+        await reply("Bot is now restarting... (unless you don't have monit lol)");
+        child_process.execSync("monit restart funkyhelper");
     }
 
     async function processTimers() {
@@ -53,6 +82,27 @@ module.exports = (client, logChannels, config, botContext) => {
                     .setDescription("Pings the Matchmaking role, only works in #matchmaking")
                 },
                 handler: matchmakingCmdHandler
+            },
+            pull: {
+                prefix: {
+                    name: "pull",
+                    params: [
+                        {
+                            name: "npm",
+                            type: "text",
+                            process: async(param) => {
+                                return param && param == "npm";
+                            }
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("pull")
+                    .setDescription("Executes git pull and reboots the bot, Bot Owner only")
+                    .addBooleanOption(option => option.setName("npm").setDescription("Should the bot run npm install before restarting?").setRequired(false))
+                },
+                handler: pullCmdHandler
             }
         },
         processTimers
