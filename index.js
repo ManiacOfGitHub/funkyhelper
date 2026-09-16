@@ -18,7 +18,7 @@ const aliasDir = path.join(__dirname, "alias");
 var cogs = {};
 var cogsLoaded = false;
 var botContext = {};
-var commandList = ["create", "delete", "help", ".", "test", "alias", "deletealias", "helpalias", "pull", "stop", "lock", "unlock", "addconsole", "removeconsole", "delconsole", "source", "upload"];
+var commandList = ["create", "delete", "help", ".","alias", "deletealias", "helpalias", "stop", "addconsole", "removeconsole", "delconsole", "source", "upload"];
 
 var sqlite = require('better-sqlite3');
 var db = sqlite('data.db');

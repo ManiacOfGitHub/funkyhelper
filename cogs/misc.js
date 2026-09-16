@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags, InteractionContextType } = require("discord.js");
 var util = require('../util')
 var child_process = require('child_process');
 var matchmakingTimer = 0;
@@ -26,7 +26,7 @@ module.exports = (client, logChannels, config, botContext) => {
 
     async function pullCmdHandler(isSlash, params, ctx) {
         let reply = util.ctxReplier(ctx, isSlash);
-        if(!config.botOwners.includes(ctx.member.id)) {
+        if(!config.botOwners.includes(isSlash ? ctx.user.id : ctx.author.id)) {
 			return reply("You do not have permission to pull from the repo. (You must be part of the `botOwners` list)");
 		}
         if(isSlash) await ctx.deferReply({flags: MessageFlags.Ephemeral});
@@ -80,6 +80,7 @@ module.exports = (client, logChannels, config, botContext) => {
                     data: new SlashCommandBuilder()
                     .setName("matchmaking")
                     .setDescription("Pings the Matchmaking role, only works in #matchmaking")
+                    .setContexts(InteractionContextType.Guild)
                 },
                 handler: matchmakingCmdHandler
             },
