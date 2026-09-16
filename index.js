@@ -9,7 +9,6 @@ const web = require('./web');
 var config = require('./config.json');
 const { log } = require('console');
 var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.activeModeratorsId]}});
-var matchmakingTimer = 0;
 var logChannels = {normal: null, important: null};
 
 const commandsDir = path.join(__dirname, 'commands');
@@ -207,21 +206,6 @@ client.on("messageCreate", async (message) => {
 			const commandList = files.filter(file => file.endsWith('.botcmd')).map(file => file.replace('.botcmd', '')).sort();
 			message.reply("Commands: " + (commandList.length ? commandList.join(", ") : "None"));
 		});
-	}
-
-	if(message.content.split(" ")[0].toLowerCase() == ".matchmaking") {
-		if(message.channel.id!=config.matchmakingChannelId) {
-			await message.reply("This command can only be used in <#" + config.matchmakingChannelId + ">");
-			return;
-		}
-		if(matchmakingTimer != 0) {
-			var minutes = Math.floor(matchmakingTimer/60);
-			var seconds = matchmakingTimer % 60;
-			await message.reply("This command is on cooldown. Wait " + (minutes ? minutes.toString() + " minute" + (minutes!=1 ? "s" : "") + " and " : "") + (seconds.toString() + " second" + (seconds!=1 ? "s" : "")) + " before sending again");
-		} else {
-			matchmakingTimer = 60 * 10;
-			await message.channel.send({content:"<@&"+config.matchmakingRoleId+">\n**Someone would like to play!**\n-# If you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.", allowedMentions: {roles: [config.matchmakingRoleId]}});
-		}
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".pingmc") {
@@ -501,7 +485,5 @@ async function processWikiCommands(message) {
 
 async function processTimers() {
 	await cogs.stickyMessages.processTimers();
-	if(matchmakingTimer > 0) {
-		matchmakingTimer--;
-	}
+	await cogs.misc.processTimers();
 }
