@@ -9,13 +9,13 @@ module.exports = (client, logChannels, config, botContext) => {
 
     async function matchmakingCmdHandler(isSlash, params, ctx) {
         if(ctx.channel.id!=config.matchmakingChannelId) {
-			await ctx.reply("This command can only be used in <#" + config.matchmakingChannelId + ">");
+			await ctx.reply({content: "This command can only be used in <#" + config.matchmakingChannelId + ">", flags: MessageFlags.Ephemeral});
 			return;
 		}
 		if(matchmakingTimer != 0) {
 			var minutes = Math.floor(matchmakingTimer/60);
 			var seconds = matchmakingTimer % 60;
-			await ctx.reply({content:"This command is on cooldown. Wait " + (minutes ? minutes.toString() + " minute" + (minutes!=1 ? "s" : "") + " and " : "") + (seconds.toString() + " second" + (seconds!=1 ? "s" : "")) + " before sending again", flags: MessageFlags.Ephemeral });
+			await ctx.reply({content:"This command is on cooldown. Wait " + (minutes ? minutes.toString() + " minute" + (minutes!=1 ? "s" : "") + " and " : "") + (seconds.toString() + " second" + (seconds!=1 ? "s" : "")) + " before sending again", flags: MessageFlags.Ephemeral});
 		} else {
 			matchmakingTimer = 60 * 10;
 			await ctx.reply({content:"<@&"+config.matchmakingRoleId+">\n**Someone would like to play!**\n-# If you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.", allowedMentions: {roles: [config.matchmakingRoleId]}});
