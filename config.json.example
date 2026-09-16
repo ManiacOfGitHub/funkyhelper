@@ -115,5 +115,6 @@
   "rankExpLength": 1000,
   "firstRankExpLength": 100,
   "clientId": "1461565616333914132",
-  "guildId": "1461160219995279390"
+  "guildId": "1461160219995279390",
+  "attemptPrivilegedIntents": true
 }

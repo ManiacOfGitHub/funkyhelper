@@ -8,7 +8,8 @@ const web = require('./web');
 
 var config = require('./config.json');
 const { log } = require('console');
-var client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent], allowedMentions: {parse: ['users'], roles: [config.activeModeratorsId]}});
+var msgContentIntent = config.attemptPrivilegedIntents;
+var client = defineClient(config.attemptPrivilegedIntents);
 var logChannels = {normal: null, important: null};
 
 const commandsDir = path.join(__dirname, 'commands');
@@ -25,9 +26,24 @@ botContext.db = db;
 db.pragma('journal_mode = WAL');
 
 
+function defineClient(usePrivilegedIntents) {
+	var intents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildModeration];
+	if(usePrivilegedIntents) {
+		intents.push(GatewayIntentBits.MessageContent);
+	}
+	let client = new Client({ intents, allowedMentions: {parse: ['users'], roles: [config.activeModeratorsId]}});
+	client.on(Events.MessageCreate, msgCreateHandler);
+	client.on(Events.MessageDelete, msgDeleteHandler);
+	client.on(Events.InteractionCreate, interactionCreateHandler);
+	client.once(Events.ClientReady, clientReady);
+	return client;
+}
 
 
-client.on("messageCreate", async (message) => {
+
+
+
+async function msgCreateHandler(message) {
 	if (!message.guild || message.author.bot) return;
 	if(!cogsLoaded) {
 		if(message.content && message.content.startsWith(".")) {
@@ -306,9 +322,9 @@ client.on("messageCreate", async (message) => {
 			}
 		}
 	}
-});
+};
 
-client.on("messageDelete", async (message) => {
+async function msgDeleteHandler(message) {
 	if(!logChannels) return;
 	if (message.author.bot) return;
 	if (message.attachments.size > 0) {
@@ -332,9 +348,9 @@ client.on("messageDelete", async (message) => {
 		}
 		await logChannels.normal.send({ content: messageText, flags: [4096], files });
 	}
-});
+};
 
-client.on(Events.InteractionCreate, async (interaction) => {
+async function interactionCreateHandler(interaction) {
 	if(!interaction.isChatInputCommand()) return;
 	if(!cogsLoaded) {
 		await interaction.reply("Please wait before sending any commands, the bot is currently restarting...");
@@ -365,7 +381,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			}
 		}
 	}
-});
+};
 
 function exit() {
 	console.log("Received command to exit... exiting safely!");
@@ -377,8 +393,9 @@ process.on('SIGINT', exit);
 process.on('SIGBREAK', exit);
 process.on('SIGTERM', exit);
 
-client.once(Events.ClientReady, async() => {
+async function clientReady() {
 	console.log('Ready! Logged in as ' + client.user.tag);
+	console.log("Message Content Intent Access: " + msgContentIntent.toString().toUpperCase() + (config.attemptPrivilegedIntents ? " (Disabled in config)" : ""));
 	client.user.setPresence({
 		activities: [{
 			name: "Stay Funky and Happy Modding!",
@@ -433,9 +450,24 @@ client.once(Events.ClientReady, async() => {
 	await web.init(config);
 
 	setInterval(processTimers, 1000);
-});
+};
 
 client.login(config.token);
+
+(async()=>{
+	try {
+		await client.login(config.token);
+	} catch(err) {
+		if(err.message == "Used disallowed intents") {
+			await client.destroy();
+			client = defineClient(false);
+			msgContentIntent = false;
+			await client.login(config.token);
+		} else {
+			throw err;
+		}
+	}
+})();
 
 function havePermission(member) {
 	return member.roles.cache.some(role => config.allowRoleList.includes(role.id));
