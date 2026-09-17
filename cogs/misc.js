@@ -27,7 +27,7 @@ module.exports = (client, logChannels, config, botContext) => {
     async function pullCmdHandler(isSlash, params, ctx) {
         let reply = util.ctxReplier(ctx, isSlash);
         if(!config.botOwners.includes(isSlash ? ctx.user.id : ctx.author.id)) {
-			return reply("You do not have permission to pull from the repo. (You must be part of the `botOwners` list)");
+			return await reply("You do not have permission to pull from the repo. (You must be part of the `botOwners` list)");
 		}
         if(isSlash) await ctx.deferReply({flags: MessageFlags.Ephemeral});
         try {
@@ -37,6 +37,7 @@ module.exports = (client, logChannels, config, botContext) => {
             return await reply("Git pull failed somehow. Idk");
         }
         if(stdout) await reply({content: stdout, flags: MessageFlags.Ephemeral});
+        if(stdout == "Already up to date.\n") return;
         if(params.npm) {
             await reply("Updating npm packages...");
             try {
@@ -47,6 +48,8 @@ module.exports = (client, logChannels, config, botContext) => {
             }
             if(stdout) await reply({content: stdout, flags: MessageFlags.Ephemeral});
         }
+        await reply("Redeploying commands...");
+        require('../deployCommands');
         await reply("Bot is now restarting... (unless you don't have monit lol)");
         child_process.execSync("monit restart funkyhelper");
     }
