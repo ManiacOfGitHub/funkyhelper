@@ -93,7 +93,7 @@ async function msgCreateHandler(message) {
 					if(!cogCommand.hasOwnProperty('prefix') || !cogCommand.prefix.hasOwnProperty('name')) continue;
 					let matchesCmd = cogCommand.prefix.name == commandName;
 					if(!matchesCmd && cogCommand.prefix.hasOwnProperty('aliases')) {
-						matchesCmd = cogCommand.prefix.aliases.hasOwnProperty('includes') && cogCommand.prefix.aliases.includes(commandName);
+						matchesCmd = Array.isArray(cogCommand.prefix.aliases) && cogCommand.prefix.aliases.includes(commandName);
 					}
 					if(!matchesCmd) continue;
 
@@ -267,14 +267,6 @@ async function msgCreateHandler(message) {
 		await message.channel.send({content:`<@&${config.activeModeratorsId}>\n\n**${message.member} has pinged you for moderation purposes.**`, allowedMentions:{roles:[config.activeModeratorsId]}});
 	}
 
-	if(message.content.split(" ")[0].toLowerCase() == ".stop") {
-		if (!config.botOwners.includes(message.member.id)) {
-			return message.reply("You do not have permission to restart the bot.");
-		}
-		await message.reply("Bot is now restarting... (unless you don't have monit lol)");
-		exec("monit restart funkyhelper");
-	}
-
 	if(message.content.split(" ")[0].toLowerCase() == ".source") {
 		if(!havePermission(message.member)) {
 			return message.reply("You do not have permission to view the source of commands.");
@@ -434,6 +426,7 @@ async function clientReady() {
 	}
 
 	botContext.havePermission = havePermission;
+	botContext.exit = exit;
 
 	fs.readdirSync(path.join(__dirname, 'cogs')).forEach(file=>{
 		if(file.endsWith(".js")) {

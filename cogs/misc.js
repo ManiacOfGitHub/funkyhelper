@@ -34,25 +34,50 @@ module.exports = (client, logChannels, config, botContext) => {
             var stdout = child_process.execSync("git pull").toString();
         } catch(err) {
             console.error(err);
-            return await reply("Git pull failed somehow. Idk");
+            return await reply({content: "Git pull failed somehow. Idk", flags: MessageFlags.Ephemeral});
         }
         if(stdout) await reply({content: stdout, flags: MessageFlags.Ephemeral});
         if(stdout == "Already up to date.\n") return;
         if(params.npm) {
-            await reply("Updating npm packages...");
+            await reply({content: "Updating npm packages...", flags: MessageFlags.Ephemeral});
             try {
                 var stdout = child_process.execSync("npm install").toString();
             } catch(err) {
                 console.error(err);
-                await reply("npm install failed somehow. Idk");
+                await reply({content: "npm install failed somehow. Idk", flags: MessageFlags.Ephemeral});
             }
             if(stdout) await reply({content: stdout, flags: MessageFlags.Ephemeral});
         }
-        await reply("Redeploying commands...");
-        require('../deployCommands');
-        await reply("Bot is now restarting... (unless you don't have monit lol)");
-        child_process.execSync("monit restart funkyhelper");
+        await reply({content: "Redeploying commands...", flags: MessageFlags.Ephemeral});
+        await require('../deployCommands')();
+        await reply({content: "Bot is now restarting...", flags: MessageFlags.Ephemeral});
+        try {
+            child_process.execSync("monit restart funkyhelper");
+        } catch(err) {
+            console.error(err);
+            await reply({content: "Failed to restart bot. Exiting process safely..."});
+            botContext.exit();
+        }
     }
+
+    async function restartCmdHandler(isSlash, params, ctx) {
+        let reply = util.ctxReplier(ctx, isSlash);
+		if (!config.botOwners.includes(isSlash ? ctx.user.id : ctx.author.id)) {
+			return await reply("You do not have permission to restart the bot.");
+		}
+        if(params.redeploy) {
+            await reply({content: "Redeploying commands...", flags: MessageFlags.Ephemeral});
+            await require('../deployCommands')();
+        }
+		await reply({content: "Bot is now restarting...", flags: MessageFlags.Ephemeral});
+		try {
+            child_process.execSync("monit restart funkyhelper");
+        } catch(err) {
+            console.error(err);
+            await reply({content: "Failed to restart bot using monit. Exiting process safely...", flags: MessageFlags.Ephemeral});
+            botContext.exit();
+        }
+	}
 
     async function processTimers() {
         if(matchmakingTimer > 0) {
@@ -107,6 +132,28 @@ module.exports = (client, logChannels, config, botContext) => {
                     .addBooleanOption(option => option.setName("npm").setDescription("Should the bot run npm install before restarting?").setRequired(false))
                 },
                 handler: pullCmdHandler
+            },
+            restart: {
+                prefix: {
+                    name: "restart",
+                    aliases: ["stop"],
+                    params: [
+                        {
+                            name: "redeploy",
+                            type: "text",
+                            process: async(param) => {
+                                return param && param == "redeploy";
+                            }
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("restart")
+                    .setDescription("Restarts/stops the bot, Bot Owner only")
+                    .addBooleanOption(option=>option.setName("redeploy").setDescription("Should the bot redeploy commands?").setRequired(false))
+                },
+                handler: restartCmdHandler
             }
         },
         processTimers
