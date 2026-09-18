@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags, InteractionContextType } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags, InteractionContextType, AttachmentBuilder } = require("discord.js");
 var util = require('../util')
+var fs = require('fs');
 var child_process = require('child_process');
 var matchmakingTimer = 0;
 
@@ -79,6 +80,63 @@ module.exports = (client, logChannels, config, botContext) => {
         }
 	}
 
+    async function pingMcCmdHandler(isSlash, params, ctx) {
+        let reply = util.ctxReplier(ctx, isSlash);
+        if(!util.hasRole(ctx.member, [config.moderatorRole, config.mcManagerRoleId]) && !config.botOwners.includes(ctx.member.id)) {
+			return await reply("no");
+		}
+        let messageContent = `<@&${config.mcPingRoleId}>`;
+        if(params.message) messageContent += '\n' + params.message;
+        let message = {content:messageContent,allowedMentions:{roles:[config.mcPingRoleId]}};
+		if(isSlash) {
+			await reply(message);
+		} else {
+			await ctx.channel.send(message);
+            await ctx.delete();
+		}
+    }
+
+    async function modPingCmdHandler(isSlash, params, ctx) {
+        let reply = util.ctxReplier(ctx, isSlash);
+        if(util.hasRole(ctx.member, config.modPingMuteRoleId)) {
+			await reply({content:`Your ability to ping <@&${config.activeModeratorsId}> has been restricted. You can appeal in <#${config.appealsChannelId}>.`,allowedMentions:{parse:[]}});
+			return;
+		}
+		await reply({content:`<@&${config.activeModeratorsId}>\n\n**${ctx.member} has pinged you for moderation purposes.**`, allowedMentions:{roles:[config.activeModeratorsId]}});
+    }
+
+    async function sourceCmdHandler(isSlash, params, ctx) {
+        let reply = util.ctxReplier(ctx, isSlash);
+        let member;
+        if(ctx.member) {
+            member = ctx.member;
+        } else {
+            try {
+                member = await botContext.guild.members.fetch(isSlash ? ctx.user : ctx.author);
+            } catch(err) {
+                return await reply("You are not a member of " + botContext.guild.name);
+            }
+        }
+        if(!botContext.havePermission(member)) {
+            return await reply("You do not have permission to view the source of commands.");
+        }
+        if(!fs.existsSync(`./commands/${params.command}.botcmd`)) {
+            return await reply("Command does not exist.");
+        }
+        var data = fs.readFileSync(`./commands/${params.command}.botcmd`, 'utf-8');
+        if(data.length <= 2000) {
+            await reply({
+                content: data,
+                files: [new AttachmentBuilder(`./commands/${params.command}.botcmd`)]
+            });
+        } else {
+            await reply({
+                content: "Over 2000 characters, cannot send, please view file below",
+                files: [new AttachmentBuilder(`./commands/${params.command}.botcmd`)]
+            });
+        }
+    }
+
     async function processTimers() {
         if(matchmakingTimer > 0) {
             matchmakingTimer--;
@@ -121,7 +179,8 @@ module.exports = (client, logChannels, config, botContext) => {
                             type: "text",
                             process: async(param) => {
                                 return param && param == "npm";
-                            }
+                            },
+                            optional: true
                         }
                     ]
                 },
@@ -143,7 +202,8 @@ module.exports = (client, logChannels, config, botContext) => {
                             type: "text",
                             process: async(param) => {
                                 return param && param == "redeploy";
-                            }
+                            },
+                            optional: true
                         }
                     ]
                 },
@@ -154,6 +214,57 @@ module.exports = (client, logChannels, config, botContext) => {
                     .addBooleanOption(option=>option.setName("redeploy").setDescription("Should the bot redeploy commands?").setRequired(false))
                 },
                 handler: restartCmdHandler
+            },
+            pingmc: {
+                prefix: {
+                    name: "pingmc",
+                    params: [
+                        {
+                            name: "message",
+                            type: "longtext"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("pingmc")
+                    .setDescription("Pings the Minecraft SMP role, Moderator and MC Server Manager only")
+                    .addStringOption(option=>option.setName("message").setDescription("Message to send alongside ping (Optional)").setRequired(false))
+                    .setContexts(InteractionContextType.Guild)
+                },
+                handler: pingMcCmdHandler
+            },
+            modping: {
+                prefix: {
+                    name: "modping",
+                    aliases: ["pingmod"],
+                    params: []
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("modping")
+                    .setDescription("Pings Active Moderators, do not use for homebrew help")
+                    .setContexts(InteractionContextType.Guild)
+                },
+                handler: modPingCmdHandler
+            },
+            source: {
+                prefix: {
+                    name: "source",
+                    params: [
+                        {
+                            "name": "command",
+                            "type": "text"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("source")
+                    .setDescription("Gets the source file of a custom command.")
+                    .addStringOption(option=>option.setName("command").setDescription("Name of command").setRequired(true))
+                },
+                handler: sourceCmdHandler
             }
         },
         processTimers

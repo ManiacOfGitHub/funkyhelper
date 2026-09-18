@@ -18,7 +18,7 @@ const aliasDir = path.join(__dirname, "alias");
 var cogs = {};
 var cogsLoaded = false;
 var botContext = {};
-var commandList = ["create", "delete", "help", ".","alias", "deletealias", "helpalias", "stop", "addconsole", "removeconsole", "delconsole", "source", "upload"];
+var commandList = ["create", "delete", "help", ".", "alias", "deletealias", "helpalias", "upload"];
 
 var sqlite = require('better-sqlite3');
 var db = sqlite('data.db');
@@ -102,20 +102,28 @@ async function msgCreateHandler(message) {
 					let argIndex = 1;
 					if(Array.isArray(cogCommand.prefix.params)) {
 						for(var param of cogCommand.prefix.params) {
-							let initalValue;
+							let initialValue;
 							switch(param.type) {
 								case "text":
-									initalValue = args[argIndex];
+									initialValue = args[argIndex];
 									argIndex++;
+									break;
+								case "longtext":
+									initialValue = args.slice(argIndex).join(" ");
+									argIndex++; // I would imagine putting any argument after a longtext argument would be strange, but why not?
 									break;
 								default:
 									throw new Error("Invalid parameter type");
 							}
+							if((initialValue===undefined || initialValue === "") && !param.optional) {
+								await message.reply("Not enough arguments.");
+								return;
+							}
 							let processedValue;
 							if(param.process) {
-								processedValue = await param.process(initalValue);
+								processedValue = await param.process(initialValue);
 							} else {
-								processedValue = initalValue;
+								processedValue = initialValue;
 							}
 							cogArgs[param.name] = processedValue;
 						}
@@ -244,51 +252,6 @@ async function msgCreateHandler(message) {
 			const commandList = files.filter(file => file.endsWith('.botcmd')).map(file => file.replace('.botcmd', '')).sort();
 			message.reply("Commands: " + (commandList.length ? commandList.join(", ") : "None"));
 		});
-	}
-
-	if(message.content.split(" ")[0].toLowerCase() == ".pingmc") {
-		if(!util.hasRole(message.member, [config.moderatorRole, config.mcManagerRoleId]) && !config.botOwners.includes(message.member.id)) {
-			await message.channel.send("no");
-			return;
-		}
-		if(args.length > 1) {
-			await message.channel.send({content:`<@&${config.mcPingRoleId}>\n${args.slice(1).join(" ")}`,allowedMentions:{roles:[config.mcPingRoleId]}});
-		} else {
-			await message.channel.send({content:`<@&${config.mcPingRoleId}>`,allowedMentions:{roles:[config.mcPingRoleId]}});
-		}
-		await message.delete();
-	}
-
-	if([".pingmod",".modping"].includes(message.content.split(" ")[0].toLowerCase())) {
-		if(util.hasRole(message.member, config.modPingMuteRoleId)) {
-			await message.reply({content:`Your ability to ping <@&${config.activeModeratorsId}> has been restricted. You can appeal in <#${config.appealsChannelId}>.`,allowedMentions:{parse:[]}});
-			return;
-		}
-		await message.channel.send({content:`<@&${config.activeModeratorsId}>\n\n**${message.member} has pinged you for moderation purposes.**`, allowedMentions:{roles:[config.activeModeratorsId]}});
-	}
-
-	if(message.content.split(" ")[0].toLowerCase() == ".source") {
-		if(!havePermission(message.member)) {
-			return message.reply("You do not have permission to view the source of commands.");
-		}
-		if(args.length < 2) {
-			return message.reply("Not enough arguments.");
-		}
-		if(!fs.existsSync(`./commands/${args[1]}.botcmd`)) {
-			return message.reply("Command does not exist.");
-		}
-		var data = fs.readFileSync(`./commands/${args[1]}.botcmd`, 'utf-8');
-		if(data.length <= 2000) {
-			await message.reply({
-				content: data,
-				files: [new AttachmentBuilder(`./commands/${args[1]}.botcmd`)]
-			});
-		} else {
-			await message.reply({
-				content: "Over 2000 characters, cannot send, please view file below",
-				files: [new AttachmentBuilder(`./commands/${args[1]}.botcmd`)]
-			});
-		}
 	}
 
 	if(message.content.split(" ")[0].toLowerCase() == ".upload") {
@@ -427,6 +390,7 @@ async function clientReady() {
 
 	botContext.havePermission = havePermission;
 	botContext.exit = exit;
+	botContext.guild = await client.guilds.fetch(config.guildId);
 
 	fs.readdirSync(path.join(__dirname, 'cogs')).forEach(file=>{
 		if(file.endsWith(".js")) {

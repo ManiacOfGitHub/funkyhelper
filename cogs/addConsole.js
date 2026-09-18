@@ -1,8 +1,9 @@
 var fs = require('fs');
+var commandList = ["addconsole", "removeconsole", "delconsole"];
 
 module.exports = (client, logChannels, config, botContext) => {
     async function onCommand(command, args, message) {
-        if(!(["addconsole", "removeconsole", "delconsole"].includes(command))) return;
+        if(!commandList.includes(command)) return;
         if(!botContext.havePermission(message.member)) {
             await message.reply("You do not have permission to edit commands.");
             return;
@@ -63,6 +64,7 @@ module.exports = (client, logChannels, config, botContext) => {
         }
     }
     return {
-        onCommand
+        onCommand,
+        commandList
     }
 }
