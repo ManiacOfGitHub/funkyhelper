@@ -31,8 +31,9 @@ module.exports = (client, logChannels, config, botContext) => {
 			return await reply("You do not have permission to pull from the repo. (You must be part of the `botOwners` list)");
 		}
         if(isSlash) await ctx.deferReply({flags: MessageFlags.Ephemeral});
+        var stdout;
         try {
-            var stdout = child_process.execSync("git pull").toString();
+            stdout = "true";//child_process.execSync("git pull").toString();
         } catch(err) {
             console.error(err);
             return await reply({content: "Git pull failed somehow. Idk", flags: MessageFlags.Ephemeral});
@@ -42,7 +43,7 @@ module.exports = (client, logChannels, config, botContext) => {
         if(params.npm) {
             await reply({content: "Updating npm packages...", flags: MessageFlags.Ephemeral});
             try {
-                var stdout = child_process.execSync("npm install").toString();
+                stdout = child_process.execSync("npm install").toString();
             } catch(err) {
                 console.error(err);
                 await reply({content: "npm install failed somehow. Idk", flags: MessageFlags.Ephemeral});
@@ -50,7 +51,16 @@ module.exports = (client, logChannels, config, botContext) => {
             if(stdout) await reply({content: stdout, flags: MessageFlags.Ephemeral});
         }
         await reply({content: "Redeploying commands...", flags: MessageFlags.Ephemeral});
-        await require('../deployCommands')();
+        try {
+            stdout = child_process.execSync(`node deployCommands.js`).toString();
+        } catch(err) {
+            console.error(err);
+            await reply({content: "Deploying commands failed somehow. Idk", flags: MessageFlags.Ephemeral});
+        }
+        if(stdout) {
+            console.log(stdout);
+            await reply({content: stdout, flags: MessageFlags.Ephemeral});
+        }
         await reply({content: "Bot is now restarting...", flags: MessageFlags.Ephemeral});
         try {
             child_process.execSync("monit restart funkyhelper");
@@ -68,7 +78,17 @@ module.exports = (client, logChannels, config, botContext) => {
 		}
         if(params.redeploy) {
             await reply({content: "Redeploying commands...", flags: MessageFlags.Ephemeral});
-            await require('../deployCommands')();
+            var stdout;
+            try {
+                stdout = child_process.execSync(`node deployCommands.js`).toString();
+            } catch(err) {
+                console.error(err);
+                await reply({content: "Deploying commands failed somehow. Idk", flags: MessageFlags.Ephemeral});
+            }
+            if(stdout) {
+                console.log(stdout);
+                await reply({content: stdout, flags: MessageFlags.Ephemeral});
+            }
         }
 		await reply({content: "Bot is now restarting...", flags: MessageFlags.Ephemeral});
 		try {
