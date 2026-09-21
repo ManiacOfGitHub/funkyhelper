@@ -33,7 +33,7 @@ module.exports = (client, logChannels, config, botContext) => {
         if(isSlash) await ctx.deferReply({flags: MessageFlags.Ephemeral});
         var stdout;
         try {
-            stdout = "true";//child_process.execSync("git pull").toString();
+            stdout = child_process.execSync("git pull").toString();
         } catch(err) {
             console.error(err);
             return await reply({content: "Git pull failed somehow. Idk", flags: MessageFlags.Ephemeral});
