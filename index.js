@@ -112,6 +112,15 @@ async function msgCreateHandler(message) {
 									initialValue = args.slice(argIndex).join(" ");
 									argIndex++; // I would imagine putting any argument after a longtext argument would be strange, but why not?
 									break;
+								case "user":
+									try {
+										initialValue = await client.users.fetch(args[argIndex].match(/\d+/).join(""));
+									} catch(err) {
+										await message.reply("Valid user was not provided.");
+										return;
+									}
+									argIndex++;
+									break;
 								default:
 									throw new Error("Invalid parameter type");
 							}
@@ -135,7 +144,7 @@ async function msgCreateHandler(message) {
 						continue;
 					}
 					try {
-						await cogCommand.handler(false, cogArgs, message);
+						await cogCommand.handler(false, cogArgs, message, commandName);
 					} catch(err) {
 						console.error(err);
 						await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
@@ -333,7 +342,7 @@ async function interactionCreateHandler(interaction) {
 				continue;
 			}
 			try {
-				await cogCommand.handler(true, cogArgs, interaction);
+				await cogCommand.handler(true, cogArgs, interaction, interaction.commandName);
 			} catch(err) {
 				console.error(err);
 				await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);

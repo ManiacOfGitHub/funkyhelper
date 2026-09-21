@@ -1,16 +1,12 @@
-var {EmbedBuilder, Embed} = require("discord.js");
+var {EmbedBuilder, Embed, SlashCommandBuilder, InteractionContextType, PermissionFlagsBits} = require("discord.js");
 var util = require('../util');
 
-var commandList = ["ban", "yeet", "unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout', 'closeticketdm', 'ctdm'];
+var commandList = ["unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout', 'closeticketdm', 'ctdm'];
 var ms = require('ms');
 
 module.exports = (client, logChannels, config, botContext) => {
     async function onCommand(command, args, message) {
         if(!commandList.includes(command)) return;
-        if(!config.fullPermsMode) {
-            await message.channel.send("You cannot use this command when `fullPermsMode` is disabled.");
-            return;
-        }
         if(args < 2) {
             await message.channel.send("Not enough arguments.");
             return;
@@ -22,30 +18,12 @@ module.exports = (client, logChannels, config, botContext) => {
             user = await message.guild.members.fetch(userId);
             if(!user) throw Error();
         } catch(err) {
-            if(!["ban","yeet","unban","unyeet"].includes(command) || !userId || userId.length > 19 || userId.length < 17) {
+            if(!["unban","unyeet"].includes(command) || !userId || userId.length > 19 || userId.length < 17) {
                 await message.reply("Valid server member was not provided.");
                 return;
             }
             if(!message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
                 await message.channel.send("no");
-                return;
-            }
-            if(command=="ban"||command=="yeet") {
-                try {
-                    await message.guild.bans.create(userId,{reason:args.slice(2).join(" ")});
-                } catch(err) {
-                    await message.reply(`Server member was not found, unable to add user to ban list by ID.\nError info: ` + (err?(err.message??"syke lmao"):"syke lmao"));
-                    return;
-                }
-                var funnyOptions = config.funnyOptions;
-                await message.reply("User" + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# User was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.");
-                let logEmbed = new EmbedBuilder();
-                logEmbed.setTitle(`.${command} was used to ban a user`);
-                logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-                logEmbed.setDescription(`Banned a user (user ID: ${userId}) from the server with the following reason:\n${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}\nThis user was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.`);
-                logEmbed.setFooter({text:"ID: " + userId});
-                logEmbed.setTimestamp();
-                await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
                 return;
             }
             if(command=="unban"||command=="unyeet") {
@@ -68,38 +46,6 @@ module.exports = (client, logChannels, config, botContext) => {
         }
         if(util.hasRole(user, config.staffRoleList)) {
             await message.reply("FunkyHelper will not afflict any punishments upon staff, please do so manually.");
-            return;
-        }
-
-        if(command=="ban" || command=="yeet") {
-            if(!message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            try {
-                let banEmbed = new EmbedBuilder();
-                banEmbed.setTitle("Moderation Action");
-                banEmbed.setDescription(`**You have been banned from ${message.guild.name}.**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nIf you would like to appeal, email staff@funkyscott47.com with the following:\n* Why you think you should be unbanned\n* What rules you violated (if any)\nPlease do not spam, it may take a few days to respond.`);
-                banEmbed.setColor("DarkRed");
-                await user.send({embeds: [banEmbed]});
-                await logChannels.important.send("DM succeeded!");
-            } catch(err) {
-                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
-            }
-            try {
-                await user.ban({reason: args.slice(2).join(" ")});
-            } catch(err) {
-                await message.reply("Failed to ban member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-            var funnyOptions = config.funnyOptions;
-            await message.reply(user.user.username + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# Ban successful.");
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to ban a user`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Banned ${user.user.username} (user ID: ${userId}) from the server with the following reason:\n${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
             return;
         }
 
@@ -442,8 +388,119 @@ module.exports = (client, logChannels, config, botContext) => {
 			return;
         }
     }
+
+    async function banCmdHandler(isSlash, params, ctx, commandName) {
+        if(isSlash) await ctx.deferReply();
+        if(isSlash && parseInt(params.user)) {
+            try {
+                params.user = await client.users.fetch(params.user);
+                if(!params.user) throw Error;
+            } catch(err) {
+                await reply("Valid user was not provided.");
+                return;
+            }
+        }
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(!(await modCheck(ctx.member))) return await reply("no");
+        var member = await getMember(params.user);
+        if(!member) {
+            try {
+                await botContext.guild.bans.create(params.user.id,{reason:params.reason||""});
+            } catch(err) {
+                await reply(`Server member was not found, unable to add user to ban list by ID.\nError info: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+            await funnyReply(reply, "User", "User was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.");
+        } else {
+            if(await staffCheck(member, reply)) return;
+            try {
+                let banEmbed = new EmbedBuilder();
+                banEmbed.setTitle("Moderation Action");
+                banEmbed.setDescription(`**You have been banned from ${botContext.guild.name}.**\n**${params.reason ? ("Reason: " + params.reason) : "No reason was provided."}**\nIf you would like to appeal, email staff@funkyscott47.com with the following:\n* Why you think you should be unbanned\n* What rules you violated (if any)\nPlease do not spam, it may take a few days to respond.`);
+                banEmbed.setColor("DarkRed");
+                await member.send({embeds: [banEmbed]});
+                await logChannels.important.send("DM succeeded!");
+            } catch(err) {
+                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+            }
+            try {
+                await member.ban({reason: params.reason});
+            } catch(err) {
+                await reply("Failed to ban member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+                return;
+            }
+            await funnyReply(reply, member.user.username, "Ban successful.");
+        }
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${isSlash?"/":"."}${commandName} was used to ban a user`);
+        logEmbed.setAuthor({name:ctx.member.user.username, iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Banned ${member?member.user.username:"a user"} (user ID: ${params.user.id}) from the server with the following reason:\n${params.reason || "No reason was provided."}${!member?"\nThis user was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.":""}`);
+        logEmbed.setFooter({text:"ID: " + params.user.id});
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function getMember(user) {
+        try {
+            var member = await botContext.guild.members.fetch(user);
+            return member;
+        } catch(err) {
+            return false;
+        }
+    }
+
+    async function staffCheck(member, reply) {
+        if(util.hasRole(member, config.staffRoleList)) {
+            await reply("FunkyHelper will not afflict any punishments upon staff, please do so manually.");
+            return true;
+        }
+    }
+    
+    async function modCheck(member) {
+        if(!member) return false;
+        return member.roles.cache.some(role=>role.id==config.moderatorRole) || config.botOwners.includes(member.id);
+    }
+
+    async function helperCheck(member) {
+
+    }
+
+    async function funnyReply(reply, username, info) {
+        var funnyOptions = config.funnyOptions;
+        await reply(`${username}${funnyOptions[~~(Math.random() * funnyOptions.length)]}\n-# ${info}`);
+    }
+
     return {
         onCommand,
-        commandList
+        commandList,
+        commands: {
+            ban: {
+                prefix: {
+                    name: "ban",
+                    aliases: ["yeet"],
+                    params: [
+                        {
+                            name: "user",
+                            type: "user"
+                        },
+                        {
+                            name: "reason",
+                            type: "longtext",
+                            optional: true
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("ban")
+                    .setDescription("Bans a member, Moderator+ only, aka yeet")
+                    .addUserOption(option=> option.setName("user").setDescription("Choose a member within the server, or paste a user ID here.").setRequired(true))
+                    .addStringOption(option=> option.setName("reason").setDescription("Optional reason to ban this user"))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
+                },
+                handler: banCmdHandler
+            }
+        }
     };
 }
