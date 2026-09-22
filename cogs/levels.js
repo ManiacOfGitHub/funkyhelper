@@ -127,9 +127,8 @@ module.exports = (client, logChannels, config, botContext)=>{
     async function rankCmdHandler(isSlash, params, ctx) {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
-        var member = await util.getMember(params.member);
-        if(!member) member = await util.getMember(isSlash?ctx.member:ctx.author);
-
+        var member = await util.getMember(botContext.guild, params.member);
+        if(!member) member = await util.getMember(botContext.guild, ctx.member);
         var fetchedExpData = expFetcher.get(member.id);
         var fetchedRankData = lbPositionFunction.get(member.id);
         var userExp = fetchedExpData?.exp || 0;
@@ -195,7 +194,7 @@ module.exports = (client, logChannels, config, botContext)=>{
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await util.getMember(params.member);
-        if(!member) member = await util.getMember(isSlash?ctx.member:ctx.author);
+        if(!member) member = await util.getMember(botContext.guild, isSlash?ctx.user:ctx.author);
         await updateRoles(member);
         await reply("Attempted to add roles based on current XP!");
     }
@@ -314,7 +313,8 @@ module.exports = (client, logChannels, config, botContext)=>{
                     params: [
                         {
                             name: "member",
-                            type: "member"
+                            type: "member",
+                            optional: true
                         }
                     ]
                 },
@@ -345,7 +345,8 @@ module.exports = (client, logChannels, config, botContext)=>{
                     params: [
                         {
                             name: "member",
-                            type: "member"
+                            type: "member",
+                            optional: true
                         }
                     ]
                 },

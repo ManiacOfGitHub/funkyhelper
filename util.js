@@ -23,13 +23,15 @@ function ctxReplier(ctx, isSlash) {
     }
 }
 
-async function getMember(user) {
+async function getMember(guild, user) {
+    if(!user) return false;
     try {
-        var member = await botContext.guild.members.fetch(user);
+        var member = await guild.members.fetch(user);
         return member;
     } catch(err) {
         return false;
     }
+    
 }
 
 module.exports = {

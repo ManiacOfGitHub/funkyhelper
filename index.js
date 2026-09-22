@@ -116,8 +116,10 @@ async function msgCreateHandler(message) {
 									try {
 										initialValue = await client.users.fetch(args[argIndex].match(/\d+/).join(""));
 									} catch(err) {
-										await message.reply("Valid user was not provided.");
-										return;
+										if(!param.optional) {
+											await message.reply("Valid user was not provided.");
+											return;
+										}
 									}
 									argIndex++;
 									break;
@@ -125,8 +127,10 @@ async function msgCreateHandler(message) {
 									try {
 										initialValue = await botContext.guild.members.fetch(args[argIndex].match(/\d+/).join(""));
 									} catch(err) {
-										await message.reply("Valid member was not provided.");
-										return;
+										if(!param.optional) {
+											await message.reply("Valid member was not provided.");
+											return;
+										}
 									}
 									argIndex++;
 									break;
