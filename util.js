@@ -24,16 +24,17 @@ function ctxReplier(ctx, isSlash) {
 }
 
 async function getMember(user) {
-        try {
-            var member = await botContext.guild.members.fetch(user);
-            return member;
-        } catch(err) {
-            return false;
-        }
+    try {
+        var member = await botContext.guild.members.fetch(user);
+        return member;
+    } catch(err) {
+        return false;
     }
+}
 
 module.exports = {
     log,
     hasRole,
-    ctxReplier
+    ctxReplier,
+    getMember
 }

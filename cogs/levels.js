@@ -1,4 +1,4 @@
-var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "fixroles", "setlevel", "leaderboard", "lb"];
+var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "setlevel"];
 var db, expFetcher, userUpdateFunction, levelUpChannel, lbPositionFunction;
 var {EmbedBuilder, AttachmentBuilder, SlashCommandBuilder} = require('discord.js');
 var util = require('../util');
@@ -122,40 +122,6 @@ module.exports = (client, logChannels, config, botContext)=>{
             await message.reply(`Deleted user \`${args[1]}\` from level database.`);
             return;
         }
-
-        if(command=="fixroles") {
-            var member, userId;
-            try {
-                userId = args[1].match(/\d+/).join("");
-                member = await message.guild.members.fetch(userId);
-                if(!member) throw Error();
-            } catch(err) {
-                member = message.member;
-            }
-            await updateRoles(member);
-            await message.reply("Attempted to add roles based on current XP!");
-        }
-
-        if(["leaderboard", "lb"].includes(command)) {
-            var topTen = db.prepare(`SELECT CAST(user_id AS varchar) AS user_id,exp from user_exp ORDER BY exp DESC LIMIT 10`).all();
-            console.log(topTen);
-            var description = "";
-            for(let rank = 1; rank <= topTen.length; rank++) {
-                let user = topTen[rank-1];
-                let userProgress = calculateProgress(user.exp);
-                let username;
-                try {
-                    let discordUser = await client.users.fetch(user.user_id);
-                    username = discordUser.username;
-                } catch(err) {}
-                description += `**#${rank}: <@${user.user_id}>** ${username?"("+username+")":""}\n\tLevel ${userProgress.level}\n\tEXP: ${user.exp}/${userProgress.xpForNextLevel}\n\n`;
-            }
-            var leaderboardEmbed = new EmbedBuilder();
-            leaderboardEmbed.setTitle("Leaderboard");
-            leaderboardEmbed.setDescription(description);
-            leaderboardEmbed.setColor("Gold");
-            await message.reply({embeds:[leaderboardEmbed]});
-        }
     }
 
     async function rankCmdHandler(isSlash, params, ctx) {
@@ -223,6 +189,37 @@ module.exports = (client, logChannels, config, botContext)=>{
         var stream = rankCanvas.createPNGStream();
         var attachment = new AttachmentBuilder(stream,{name: member.user.id+"_rank.png"});
         await reply({files:[attachment]});
+    }
+
+    async function fixRolesCmdHandler(isSlash, params, ctx) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await util.getMember(params.member);
+        if(!member) member = await util.getMember(isSlash?ctx.member:ctx.author);
+        await updateRoles(member);
+        await reply("Attempted to add roles based on current XP!");
+    }
+
+    async function leaderboardCmdHandler(isSlash, params, ctx) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var topTen = db.prepare(`SELECT CAST(user_id AS varchar) AS user_id,exp from user_exp ORDER BY exp DESC LIMIT 10`).all();
+        var description = "";
+        for(let rank = 1; rank <= topTen.length; rank++) {
+            let user = topTen[rank-1];
+            let userProgress = calculateProgress(user.exp);
+            let username;
+            try {
+                let discordUser = await client.users.fetch(user.user_id);
+                username = discordUser.username;
+            } catch(err) {}
+            description += `**#${rank}: <@${user.user_id}>** ${username?"("+username+")":""}\n\tLevel ${userProgress.level}\n\tEXP: ${user.exp}/${userProgress.xpForNextLevel}\n\n`;
+        }
+        var leaderboardEmbed = new EmbedBuilder();
+        leaderboardEmbed.setTitle("Leaderboard");
+        leaderboardEmbed.setDescription(description);
+        leaderboardEmbed.setColor("Gold");
+        await reply({embeds:[leaderboardEmbed]});
     }
 
     async function setExp(member, exp) {
@@ -328,6 +325,37 @@ module.exports = (client, logChannels, config, botContext)=>{
                     .addUserOption(option=>option.setName("member").setDescription("Member to see the rank of, defaults to your own"))
                 },
                 handler: rankCmdHandler
+            },
+            leaderboard: {
+                prefix: {
+                    name: "leaderboard",
+                    aliases: ["lb"],
+                    params: []
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("leaderboard")
+                    .setDescription("Shows a top 10 leaderboard, aka lb")
+                },
+                handler: leaderboardCmdHandler
+            },
+            fixroles: {
+                prefix: {
+                    name: "fixroles",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("fixroles")
+                    .setDescription("Fix the roles applied to a user based on their level.")
+                    .addUserOption(option=>option.setName("member").setDescription("Member whose roles to fix, defaults to you"))
+                },
+                handler: fixRolesCmdHandler
             }
         }
     }
