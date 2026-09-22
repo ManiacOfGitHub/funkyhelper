@@ -1,7 +1,7 @@
 var {EmbedBuilder, Embed, SlashCommandBuilder, InteractionContextType, PermissionFlagsBits} = require("discord.js");
 var util = require('../util');
 
-var commandList = ["unban", "unyeet", "scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'timeout', 'untimeout', 'closeticketdm', 'ctdm'];
+var commandList = ["scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'closeticketdm', 'ctdm'];
 var ms = require('ms');
 
 module.exports = (client, logChannels, config, botContext) => {
@@ -18,39 +18,12 @@ module.exports = (client, logChannels, config, botContext) => {
             user = await message.guild.members.fetch(userId);
             if(!user) throw Error();
         } catch(err) {
-            if(!["unban","unyeet"].includes(command) || !userId || userId.length > 19 || userId.length < 17) {
-                await message.reply("Valid server member was not provided.");
-                return;
-            }
-            if(!message.member.roles.cache.some(role=>role.id==config.moderatorRole) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            if(command=="unban"||command=="unyeet") {
-                try {
-                    await message.guild.bans.remove(userId,{reason:args.slice(2).join(" ")});
-                } catch(err) {
-                    await message.reply(`Server member was not found, unable to remove user from ban list by ID.\nError info: ` + (err?(err.message??"syke lmao"):"syke lmao"));
-                    return;
-                }
-                await message.reply("User removed from ban list.");
-                let logEmbed = new EmbedBuilder();
-                logEmbed.setTitle(`.${command} was used to unban a user`);
-                logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-                logEmbed.setDescription(`Unbanned a user (user ID: ${userId}) from the server with the following reason:\n${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}`);
-                logEmbed.setFooter({text:"ID: " + userId});
-                logEmbed.setTimestamp();
-                await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-                return;
-            }
+            await message.reply("Valid server member was not provided.");
+            return;
         }
         if(util.hasRole(user, config.staffRoleList)) {
             await message.reply("FunkyHelper will not afflict any punishments upon staff, please do so manually.");
             return;
-        }
-
-        if(command == "unban" || command == "unyeet") {
-            return await message.reply("The user is already in the server.");
         }
 
         if(command=="scamkick") {
@@ -278,98 +251,6 @@ module.exports = (client, logChannels, config, botContext) => {
             return;
         }
 
-        if(command=='timeout') {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            try {
-                var timeoutTime = ms(args[2]);
-                if(!Number.isFinite(timeoutTime)) {
-                    await message.reply("Invalid (or no) time specified.");
-                    return;
-                }
-                if(timeoutTime < 1000) {
-                    timeoutTime *= 1000;
-                }
-                if(timeoutTime < ms('5s')) {
-                    await message.reply("Time cannot be shorter than 5 seconds");
-                    return;
-                }
-                if(timeoutTime > ms('28d')) {
-                    await message.reply("Time cannot be longer than 28 days.");
-                    return;
-                }
-            } catch(err) {
-                await message.reply("Invalid (or no) time specified.");
-                return;
-            }
-
-            try {
-                await user.timeout(timeoutTime, args.slice(3).join(" "));
-            } catch(err) {
-                await message.reply("Failed to time out member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            try {
-                await user.fetch();
-                let timeoutEmbed = new EmbedBuilder();
-                timeoutEmbed.setTitle("Moderation Action");
-                timeoutEmbed.setDescription(`**You have been timed out in ${message.guild.name} for ${ms(timeoutTime, {long: true})}.**\n**${args.length>2?("Reason: " + args.slice(3).join(" ")):"No reason was provided."}**\nYou will be able to speak in the server on <t:${~~(user.communicationDisabledUntilTimestamp/1000)}:f>.`);
-                timeoutEmbed.setColor("DarkRed");
-                await user.send({embeds: [timeoutEmbed]});
-                await logChannels.important.send("DM succeeded!");
-            } catch(err) {
-                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
-            }
-            
-            var funnyOptions = config.funnyOptions;
-            await message.reply(user.user.username + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# Timeout successful.");
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to time out a user.`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Timed out ${user.user.username} (user ID: ${userId}) for ${ms(timeoutTime, {long: true})}. ${args.length>2?("Reason: " + args.slice(3).join(" ")):"No reason was provided."}`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
-        if(command=='untimeout') {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-
-            try {
-                await user.timeout(null, args.slice(2).join(" "));
-            } catch(err) {
-                await message.reply("Failed to remove time out from member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            try {
-                await user.fetch();
-                let timeoutEmbed = new EmbedBuilder();
-                timeoutEmbed.setTitle("Moderation Action");
-                timeoutEmbed.setDescription(`**Good news! You have been untimed out in ${message.guild.name}!**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nWelcome back to the server!`);
-                timeoutEmbed.setColor("Green");
-                await user.send({embeds: [timeoutEmbed]});
-                await logChannels.important.send("DM succeeded!");
-            } catch(err) {
-                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
-            }
-
-            await message.reply("User's timeout was removed.");
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to remove a timeout from a user.`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Untimed out ${user.user.username} (user ID: ${userId}). ${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
         if(["closeticketdm","ctdm"].includes(command)) {
             try {
                 await user.fetch();
@@ -401,7 +282,7 @@ module.exports = (client, logChannels, config, botContext) => {
             }
         }
         var reply = util.ctxReplier(ctx, isSlash);
-        if(!(await modCheck(ctx.member))) return await reply("no");
+        if(!modCheck(ctx.member)) return await reply("no");
         var member = await getMember(params.user);
         if(!member) {
             try {
@@ -432,12 +313,135 @@ module.exports = (client, logChannels, config, botContext) => {
             await funnyReply(reply, member.user.username, "Ban successful.");
         }
         let logEmbed = new EmbedBuilder();
-        logEmbed.setTitle(`${isSlash?"/":"."}${commandName} was used to ban a user`);
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to ban a user`);
         logEmbed.setAuthor({name:ctx.member.user.username, iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
         logEmbed.setDescription(`Banned ${member?member.user.username:"a user"} (user ID: ${params.user.id}) from the server with the following reason:\n${params.reason || "No reason was provided."}${!member?"\nThis user was not found within the server, so they have been added to the ban list by ID. They have **not** been sent a DM.":""}`);
         logEmbed.setFooter({text:"ID: " + params.user.id});
         logEmbed.setTimestamp();
         await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function unbanCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) {
+            await ctx.deferReply();
+            try {
+                params.user = await client.users.fetch(params.user);
+                if(!params.user) throw Error;
+            } catch(err) {
+                await reply("Valid user was not provided.");
+                return;
+            }
+        }
+        if(!modCheck(ctx.member)) return await reply("no");
+        if(await getMember(params.user)) return await reply("The user is already in the server.");
+        try {
+            await botContext.guild.bans.remove(params.user.id,{reason:params.reason});
+        } catch(err) {
+            await reply(`Unable to remove user from ban list by ID.\nError info: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+        await reply("User removed from ban list.");
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to unban a user`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Unbanned a user (user ID: ${params.user.id}) from the server with the following reason:\n${params.reason?("Reason: " + params.reason):"No reason was provided."}`);
+        logEmbed.setFooter({text:"ID: " + params.user.id});
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function timeoutCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+        try {
+            var timeoutTime = ms(params.duration);
+            if(!Number.isFinite(timeoutTime)) {
+                await reply("Invalid (or no) time specified.");
+                return;
+            }
+            if(timeoutTime < 1000) {
+                timeoutTime *= 1000;
+            }
+            if(timeoutTime < ms('5s')) {
+                await reply("Time cannot be shorter than 5 seconds");
+                return;
+            }
+            if(timeoutTime > ms('28d')) {
+                await reply("Time cannot be longer than 28 days.");
+                return;
+            }
+        } catch(err) {
+            await reply("Invalid (or no) time specified.");
+            return;
+        }
+
+        try {
+            await member.timeout(timeoutTime, params.reason);
+        } catch(err) {
+            await reply("Failed to time out member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        try {
+            await member.fetch();
+            let timeoutEmbed = new EmbedBuilder();
+            timeoutEmbed.setTitle("Moderation Action");
+            timeoutEmbed.setDescription(`**You have been timed out in ${botContext.guild.name} for ${ms(timeoutTime, {long: true})}.**\n**${params.reason?("Reason: " + params.reason):"No reason was provided."}**\nYou will be able to speak in the server on <t:${~~(member.communicationDisabledUntilTimestamp/1000)}:f>.`);
+            timeoutEmbed.setColor("DarkRed");
+            await member.send({embeds: [timeoutEmbed]});
+            await logChannels.important.send("DM succeeded!");
+        } catch(err) {
+            await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+        }
+        
+        await funnyReply(reply, member.user.username, "Timeout successful.");
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to time out a user.`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Timed out ${member.user.username} (user ID: ${member.id}) for ${ms(timeoutTime, {long: true})}. ${params.reason?("Reason: " + params.reason):"No reason was provided."}`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+        return;
+    }
+
+    async function untimeoutCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.timeout(null, params.reason);
+        } catch(err) {
+            await reply("Failed to remove time out from member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        try {
+            await member.fetch();
+            let timeoutEmbed = new EmbedBuilder();
+            timeoutEmbed.setTitle("Moderation Action");
+            timeoutEmbed.setDescription(`**Good news! You have been untimed out in ${botContext.guild.name}!**\n**${params.reason?("Reason: " + params.reason):"No reason was provided."}**\nWelcome back to the server!`);
+            timeoutEmbed.setColor("Green");
+            await member.send({embeds: [timeoutEmbed]});
+            await logChannels.important.send("DM succeeded!");
+        } catch(err) {
+            await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+        }
+
+        await reply("User's timeout was removed.");
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to remove a timeout from a user.`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Untimed out ${member.user.username} (user ID: ${member.id}). ${params.reason?("Reason: " + params.reason):"No reason was provided."}`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+        return;
     }
 
     async function getMember(user) {
@@ -456,18 +460,23 @@ module.exports = (client, logChannels, config, botContext) => {
         }
     }
     
-    async function modCheck(member) {
+    function modCheck(member) {
         if(!member) return false;
         return member.roles.cache.some(role=>role.id==config.moderatorRole) || config.botOwners.includes(member.id);
     }
 
-    async function helperCheck(member) {
-
+    function helperCheck(member) {
+        if(!member) return false;
+        return util.hasRole(member, config.helperPlusRoleList) || config.botOwners.includes(member.id);
     }
 
     async function funnyReply(reply, username, info) {
         var funnyOptions = config.funnyOptions;
         await reply(`${username}${funnyOptions[~~(Math.random() * funnyOptions.length)]}\n-# ${info}`);
+    }
+
+    function commandStr(commandName, isSlash) {
+        return `${isSlash?"/":"."}${commandName}`;
     }
 
     return {
@@ -500,6 +509,90 @@ module.exports = (client, logChannels, config, botContext) => {
                     .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
                 },
                 handler: banCmdHandler
+            },
+            unban: {
+                prefix: {
+                    name: "unban",
+                    aliases: ["unyeet"],
+                    params: [
+                        {
+                            name: "user",
+                            type: "user"
+                        },
+                        {
+                            name: "reason",
+                            type: "longtext",
+                            optional: true
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("unban")
+                    .setDescription("Unbans a user, Moderator+ only, aka unyeet")
+                    .addStringOption(option=> option.setName("user").setDescription("The user ID").setRequired(true))
+                    .addStringOption(option=> option.setName("reason").setDescription("Optional reason to unban this user"))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
+                },
+                handler: unbanCmdHandler
+            },
+            timeout: {
+                prefix: {
+                    name: "timeout",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        },
+                        {
+                            name: "duration",
+                            type: "text"
+                        },
+                        {
+                            name: "reason",
+                            type: "longtext",
+                            optional: true
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("timeout")
+                    .setDescription("Times out a member, Helper+ only")
+                    .addUserOption(option=>option.setName("member").setDescription("The member to time out").setRequired(true))
+                    .addStringOption(option=>option.setName("duration").setDescription("How long they should be timed out for").setRequired(true))
+                    .addStringOption(option=>option.setName("reason").setDescription("Optional reason to timeout this user"))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: timeoutCmdHandler
+            },
+            untimeout: {
+                prefix: {
+                    name: "untimeout",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        },
+                        {
+                            name: "reason",
+                            type: "longtext",
+                            optional: true
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("untimeout")
+                    .setDescription("Untimes out a member, Helper+ only")
+                    .addUserOption(option=>option.setName("member").setDescription("The member to untime out").setRequired(true))
+                    .addStringOption(option=>option.setName("reason").setDescription("Optional reason to timeout this user"))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: untimeoutCmdHandler
             }
         }
     };

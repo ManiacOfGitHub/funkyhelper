@@ -121,6 +121,15 @@ async function msgCreateHandler(message) {
 									}
 									argIndex++;
 									break;
+								case "member":
+									try {
+										initialValue = await botContext.guild.members.fetch(args[argIndex].match(/\d+/).join(""));
+									} catch(err) {
+										await message.reply("Valid member was not provided.");
+										return;
+									}
+									argIndex++;
+									break;
 								default:
 									throw new Error("Invalid parameter type");
 							}
@@ -347,7 +356,7 @@ async function interactionCreateHandler(interaction) {
 				console.error(err);
 				await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
 				let errorMessage = `An unhandled exception occurred when executing the command. It has been logged in a staff-only channel. Please contact a Bot Maintainer for more information.`;
-				if(interaction.replied) {
+				if(interaction.replied || interaction.deferred) {
 					await interaction.followUp(errorMessage);
 				} else {
 					await interaction.reply(errorMessage);
