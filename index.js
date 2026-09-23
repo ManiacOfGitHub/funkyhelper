@@ -24,6 +24,7 @@ var sqlite = require('better-sqlite3');
 var db = sqlite('data.db');
 botContext.db = db;
 db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON;');
 
 
 function defineClient(usePrivilegedIntents) {
@@ -55,6 +56,12 @@ async function msgCreateHandler(message) {
 	await cogs.stickyMessages.onMessage(message);
     if(!message.content && message.content !== "") return;
 	(async()=>{
+		try {
+			await cogs.customCommandPrefix.onMessage(message);
+		} catch(err) {
+			console.error(err);
+			await logChannels.important.send("An error occurred with the customCommandPrefix cog. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
 		try {
 			await cogs.withdrawalScam.onMessage(message);
 		} catch(err) {
@@ -338,6 +345,19 @@ async function interactionCreateHandler(interaction) {
 		await interaction.reply("Please wait before sending any commands, the bot is currently restarting...");
 		return;
 	}
+	try {
+		if(cogs.hasOwnProperty("customCommandSlash") && cogs.customCommandSlash.hasOwnProperty("onChatInteraction")) {
+			await cogs.customCommandSlash.onChatInteraction(interaction);
+		}
+	} catch(err) {
+		console.error(err);
+		let errorMessage = `An unhandled exception occurred when executing the command. It has been logged in a staff-only channel. Please contact a Bot Maintainer for more information.`;
+		if(interaction.replied || interaction.deferred) {
+			await interaction.followUp(errorMessage);
+		} else {
+			await interaction.reply(errorMessage);
+		}
+	}
 	for(let cogName in cogs) {
 		if(cogs[cogName].hasOwnProperty('commands')) {
 			if(!cogs[cogName].commands.hasOwnProperty(interaction.commandName)) continue;
@@ -421,9 +441,16 @@ async function clientReady() {
 		}
 	});
 
+	var {promise, resolve} = Promise.withResolvers();
+	botContext.customCommandCogLoaded = promise;
+
 	for(let cogName in cogs) {
 		if(cogs[cogName].hasOwnProperty("onReady")) {
-			await cogs[cogName].onReady();
+			if(cogs[cogName].hasOwnProperty("noAwait") && cogs[cogName].noAwait) {
+				cogs[cogName].onReady();
+			} else {
+				await cogs[cogName].onReady();
+			}
 		}
 		// TODO: Remove once all commands are migrated to new system.
 		if(cogs[cogName].hasOwnProperty("commandList")) {
@@ -432,6 +459,11 @@ async function clientReady() {
 		if(cogs[cogName].hasOwnProperty("commands")) {
 			commandList.push(...Object.keys(cogs[cogName].commands));
 		}
+	}
+
+	if(cogs.hasOwnProperty("customCommand")) {
+		botContext.customCommandCog = cogs.customCommand;
+		resolve();
 	}
 
 	cogsLoaded = true;

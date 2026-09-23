@@ -1,150 +1,123 @@
-var fs = require('fs');
 var util = require("../util");
-var {EmbedBuilder} = require("discord.js");
+var getCommandList, getCommandDataNodes, getConsoleNodes, getConsoleNamesForConsole, getCmdNodeIdFromName, getTextData, getEmbedData;
+var db;
 
 module.exports = (client, logChannels, config, botContext) => {
-    async function onCommand(commandName, args, message) {
-        if (message.content.startsWith(".") && fs.existsSync(`./alias/${commandName}.alias`)) {
-            try {
-                commandName = fs.readFileSync(`./alias/${commandName}.alias`, 'utf8');
-            } catch(err) {
-                console.log(`Could not fetch alias ${commandName}`);
-            }
-        }
-        if (message.content.startsWith(".") && fs.existsSync(`./commands/${commandName}.botcmd`)) {
-            fs.readFile(`./commands/${commandName}.botcmd`, 'utf8', async (err, commandContent) => {
-                if (commandContent === "" || commandContent === null) {
-                    return message.reply("Command content is empty.");
-                }
-                if (err) return;
-                await processCmdData(commandContent, message, args, false);
-            });
-        }
+    async function onReady() {
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS command_nodes (
+                id INTEGER PRIMARY KEY,
+                parent_id INTEGER,
+                type TEXT NOT NULL CHECK ( type IN ('command', 'console', 'consolename', 'embed', 'commandname', 'text') ),
+                FOREIGN KEY (parent_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+            );
+            
+            CREATE TABLE IF NOT EXISTS commands (
+                node_id INTEGER PRIMARY KEY,
+                description TEXT,
+                off_topic BOOL DEFAULT false,
+                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS command_consoles (
+                node_id INTEGER PRIMARY KEY,
+                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS command_console_names (
+                node_id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS embed_data (
+                node_id INTEGER PRIMARY KEY,
+                author TEXT,
+                title TEXT,
+                color TEXT,
+                image TEXT,
+                description TEXT,
+                footer TEXT,
+                url TEXT,
+                off_topic BOOL DEFAULT false,
+                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS command_text (
+                node_id INTEGER PRIMARY KEY,
+                content TEXT,
+                off_topic BOOL DEFAULT false,
+                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS command_names (
+                node_id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                primary_name BOOL NOT NULL DEFAULT false,
+                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+            );
+        `);
     }
 
-    async function processCmdData(data, message, args, offTopicFound) {
-        try {
-            if(typeof(data)=="string") {
-                if (!(data.startsWith("`") && data.endsWith("`"))) {
-                    throw Error();
-                }
-                data = JSON.parse(data.slice(1, -1));
-            }
-            if(data.offTopic) {
-                offTopicFound = true;
-            }
-            if(data.consoles) {
-                if(args.length && args.length > 1) {
-                    let consoleArg = args[1].toLowerCase();
-                    for(let aliases in config.consoleAliases) {
-                        if(config.consoleAliases[aliases].includes(consoleArg)) {
-                            consoleArg = aliases;
-                            break;
-                        }
-                    }
-                    if(data.consoleMaps) {
-                        if(data.consoleMaps.hasOwnProperty(consoleArg)) {
-                            consoleArg = null; // don't allow use of console map name as console argument
-                        }
-                        for(let consoleMap in data.consoleMaps) {
-                            if(data.consoleMaps[consoleMap].includes(consoleArg)) {
-                                consoleArg = consoleMap;
-                                break;
-                            }
-                        }
-                    }
-                    if(data.consoles.hasOwnProperty(consoleArg)) {
-                        return processCmdData(data.consoles[consoleArg], message, args, offTopicFound);
-                    }
-                }
-                if(config.consoleHelpChannels.hasOwnProperty(message.channel.id)) {
-                    let consoleName = config.consoleHelpChannels[message.channel.id];
-                    if(data.consoleMaps) {
-                        if(data.consoleMaps.hasOwnProperty(consoleName)) {
-                            consoleArg = null;
-                        }
-                        for(let consoleMap in data.consoleMaps) {
-                            if(data.consoleMaps[consoleMap].includes(consoleName)) {
-                                consoleName = consoleMap;
-                                break;
-                            }
-                        }
-                    }
-                    if(data.consoles.hasOwnProperty(consoleName)) {
-                        return processCmdData(data.consoles[consoleName], message, args, offTopicFound);
-                    }
-                }
-                let options = Object.keys(data.consoles);
-                if(data.consoleMaps) {
-                    for(var i in options) {
-                        if(data.consoleMaps[options[i]]) {
-                            options[i] = data.consoleMaps[options[i]];
-                        }
-                    }
-                }
-                options = options.flat();
-                for(var i in options) {
-                    if(config.consoleAliases.hasOwnProperty(options[i])) {
-                        options[i] = [options[i], ...config.consoleAliases[options[i]]];
-                    }
-                }
-                options = options.flat();
-                await message.reply("Please specify a parameter. Valid options are: " + options.sort().join(", ") + ".");
-                return;
-            }
-            if (data.random) {
-               return processCmdData(data.random[~~(Math.random() * data.random.length)], message, args, offTopicFound); 
-            }
-            if(!offTopicFound && config.noHelpCommandChannelList.includes(message.channel.id) && !util.hasRole(message.member, config.staffRoleList)) {
-                await message.reply("You cannot use assistance commands in off-topic channels unless you are staff. Please try again in <#"+config.botCmdsChannelId+">. If you believe this is a mistake, contact a bot maintainer.");
-                return;
-            }
-            let embed = new EmbedBuilder();
-            if (data.author) embed.setAuthor({ name: data.author });
-            if (data.title) embed.setTitle(data.title);
-            if (data.color) {
-                var consoleColors = {
-                    "3DS": 0xCE181E,
-                    "WiiU": 0x009AC7,
-                    "Switch": 0xE60012,
-                    "Wii": 0x009AC7
-                }
-                if (data.color in consoleColors) {
-                    embed.setColor(consoleColors[data.color]);
-                } else {
-                    embed.setColor(parseInt(data.color, 16));
-                }
-            };
-            if (data.image) embed.setImage(data.image);
-            if (data.description) embed.setDescription(data.description);
-            if (data.footer) embed.setFooter({ text: data.footer });
-            if (data.url) embed.setURL(data.url);
-            if (message.reference) {
-                (await message.fetchReference()).reply({ embeds: [embed] });
-            } else {
-                await message.channel.send({ embeds: [embed] });
-            }
-        } catch(err) {
-            var isOffTopic = false;
-            if(!data.startsWith) return;
-            if(data.toLowerCase().startsWith("offtopic ")) {
-                isOffTopic = true;
-                data = data.split(" ").slice(1).join(" ");
-            }
-            if(config.noHelpCommandChannelList.includes(message.channel.id) && !isOffTopic && !util.hasRole(message.member, config.staffRoleList)) {
-                await message.reply("You cannot use assistance commands in off-topic channels unless you are staff. Please try again in <#"+config.botCmdsChannelId+">. If you believe this is a mistake, contact a bot maintainer.");
-                return;
-            }
-            if (message.reference) {
-                (await message.fetchReference()).reply(data);
-            } else {
-                await message.channel.send(data);
-            }
+    function searchDataNode(parentId) {
+        var cmdDataNodes = getCommandDataNodes.all(parentId);
+        if(!cmdDataNodes || !cmdDataNodes.length) return false;
+        var dataNodeInfo;
+        if(cmdDataNodes.length == 1) {
+            dataNodeInfo = cmdDataNodes[0];
+        } else {
+            dataNodeInfo = cmdDataNodes[~~(Math.random() * cmdDataNodes.length)];
         }
-        
+        return dataNodeInfo;
     }
+    db = botContext.db;
+    getCommandList = db.prepare(`
+        SELECT command_nodes.parent_id id, command_names.name, commands.description, commands.off_topic
+        FROM command_names
+        JOIN command_nodes ON command_nodes.id = command_names.node_id
+        JOIN commands ON commands.node_id = command_nodes.parent_id
+        WHERE command_names.primary_name = 1;
+    `);
+
+    getCommandDataNodes = db.prepare(`
+        SELECT id,type FROM command_nodes WHERE parent_id=? AND type in ('text','embed');
+    `);
+        
+    getConsoleNodes = db.prepare(`
+        SELECT id FROM command_nodes WHERE parent_id=? AND type='console';    
+    `);
+
+    getConsoleNamesForConsole = db.prepare(`
+        SELECT command_console_names.name
+        FROM command_console_names
+        JOIN command_nodes ON command_console_names.node_id = command_nodes.id
+        WHERE command_nodes.parent_id = ?
+    `);
+
+    getCmdNodeIdFromName = db.prepare(`
+        SELECT command_nodes.parent_id
+        FROM command_nodes
+        JOIN command_names ON command_names.node_id = command_nodes.id
+        WHERE command_names.name = ?
+    `);
+
+    getTextData = db.prepare(`
+        SELECT * from command_text WHERE node_id = ?
+    `);
+
+    getEmbedData = db.prepare(`
+        SELECT * from embed_data WHERE node_id = ?
+    `);
+
 
     return {
-        onCommand
-    };
+        searchDataNode,
+        onReady,
+        getCommandList,
+        getConsoleNodes,
+        getConsoleNamesForConsole,
+        getCmdNodeIdFromName,
+        getTextData,
+        getEmbedData
+    }
 }
