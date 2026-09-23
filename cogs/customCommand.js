@@ -3,74 +3,61 @@ var getCommandList, getCommandDataNodes, getConsoleNodes, getConsoleNamesForCons
 var db;
 
 module.exports = (client, logChannels, config, botContext) => {
-    async function onReady() {
-        db.exec(`
-            CREATE TABLE IF NOT EXISTS command_nodes (
-                id INTEGER PRIMARY KEY,
-                parent_id INTEGER,
-                type TEXT NOT NULL CHECK ( type IN ('command', 'console', 'consolename', 'embed', 'commandname', 'text') ),
-                FOREIGN KEY (parent_id) REFERENCES command_nodes(id) ON DELETE CASCADE
-            );
-            
-            CREATE TABLE IF NOT EXISTS commands (
-                node_id INTEGER PRIMARY KEY,
-                description TEXT,
-                off_topic BOOL DEFAULT false,
-                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
-            );
-
-            CREATE TABLE IF NOT EXISTS command_consoles (
-                node_id INTEGER PRIMARY KEY,
-                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
-            );
-
-            CREATE TABLE IF NOT EXISTS command_console_names (
-                node_id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
-            );
-
-            CREATE TABLE IF NOT EXISTS embed_data (
-                node_id INTEGER PRIMARY KEY,
-                author TEXT,
-                title TEXT,
-                color TEXT,
-                image TEXT,
-                description TEXT,
-                footer TEXT,
-                url TEXT,
-                off_topic BOOL DEFAULT false,
-                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
-            );
-
-            CREATE TABLE IF NOT EXISTS command_text (
-                node_id INTEGER PRIMARY KEY,
-                content TEXT,
-                off_topic BOOL DEFAULT false,
-                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
-            );
-
-            CREATE TABLE IF NOT EXISTS command_names (
-                node_id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL UNIQUE,
-                primary_name BOOL NOT NULL DEFAULT false,
-                FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
-            );
-        `);
-    }
-
-    function searchDataNode(parentId) {
-        var cmdDataNodes = getCommandDataNodes.all(parentId);
-        if(!cmdDataNodes || !cmdDataNodes.length) return false;
-        var dataNodeInfo;
-        if(cmdDataNodes.length == 1) {
-            dataNodeInfo = cmdDataNodes[0];
-        } else {
-            dataNodeInfo = cmdDataNodes[~~(Math.random() * cmdDataNodes.length)];
-        }
-        return dataNodeInfo;
-    }
     db = botContext.db;
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS command_nodes (
+            id INTEGER PRIMARY KEY,
+            parent_id INTEGER,
+            type TEXT NOT NULL CHECK ( type IN ('command', 'console', 'consolename', 'embed', 'commandname', 'text') ),
+            FOREIGN KEY (parent_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+        );
+        
+        CREATE TABLE IF NOT EXISTS commands (
+            node_id INTEGER PRIMARY KEY,
+            description TEXT,
+            off_topic BOOL DEFAULT false,
+            FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS command_consoles (
+            node_id INTEGER PRIMARY KEY,
+            FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS command_console_names (
+            node_id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS embed_data (
+            node_id INTEGER PRIMARY KEY,
+            author TEXT,
+            title TEXT,
+            color TEXT,
+            image TEXT,
+            description TEXT,
+            footer TEXT,
+            url TEXT,
+            off_topic BOOL DEFAULT false,
+            FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS command_text (
+            node_id INTEGER PRIMARY KEY,
+            content TEXT,
+            off_topic BOOL DEFAULT false,
+            FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS command_names (
+            node_id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            primary_name BOOL NOT NULL DEFAULT false,
+            FOREIGN KEY (node_id) REFERENCES command_nodes(id) ON DELETE CASCADE
+        );
+    `);
+    
     getCommandList = db.prepare(`
         SELECT command_nodes.parent_id id, command_names.name, commands.description, commands.off_topic
         FROM command_names
@@ -109,10 +96,21 @@ module.exports = (client, logChannels, config, botContext) => {
         SELECT * from embed_data WHERE node_id = ?
     `);
 
+    function searchDataNode(parentId) {
+        var cmdDataNodes = getCommandDataNodes.all(parentId);
+        if(!cmdDataNodes || !cmdDataNodes.length) return false;
+        var dataNodeInfo;
+        if(cmdDataNodes.length == 1) {
+            dataNodeInfo = cmdDataNodes[0];
+        } else {
+            dataNodeInfo = cmdDataNodes[~~(Math.random() * cmdDataNodes.length)];
+        }
+        return dataNodeInfo;
+    }
+
 
     return {
         searchDataNode,
-        onReady,
         getCommandList,
         getConsoleNodes,
         getConsoleNamesForConsole,
