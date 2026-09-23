@@ -3,6 +3,7 @@ var getCommandList, getCommandDataNodes, getConsoleNodes, getConsoleNamesForCons
 var db;
 
 module.exports = (client, logChannels, config, botContext) => {
+    if(botContext) {
     db = botContext.db;
     db.exec(`
         CREATE TABLE IF NOT EXISTS command_nodes (
@@ -95,6 +96,7 @@ module.exports = (client, logChannels, config, botContext) => {
     getEmbedData = db.prepare(`
         SELECT * from embed_data WHERE node_id = ?
     `);
+    }
 
     function searchDataNode(parentId) {
         var cmdDataNodes = getCommandDataNodes.all(parentId);
