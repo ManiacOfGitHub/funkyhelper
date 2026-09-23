@@ -1,4 +1,5 @@
 const {REST, Routes, SlashCommandBuilder } = require("discord.js");
+var util = require('../util');
 var db, customCommand;
 
 module.exports = (client, logChannels, config, botContext) => {
@@ -9,6 +10,7 @@ module.exports = (client, logChannels, config, botContext) => {
     }
 
     async function customRedeployCmdHandler(isSlash, params, ctx) {
+        var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var commands = customCommand.getCommandList.all();
         var slashCommands = [];
@@ -32,17 +34,20 @@ module.exports = (client, logChannels, config, botContext) => {
             }
             slashCommands.push(slashCommand);
         }
+        await reply("Command data has loaded! Deploying with Discord API...");
         console.log("Command data has loaded! Deploying with Discord API...");
 
         var rest = new REST().setToken(config.token);
         try {
             await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), {body: slashCommands});
         } catch(err) {
+            await reply("An error occurred while deploying commands.");
             console.log("An error occurred while deploying commands:");
             console.error(err);
             return;
         }
 
+        await reply("All guild (custom) commands were successfully deployed!");
         console.log("All guild (custom) commands were successfully deployed!");
     }
 
