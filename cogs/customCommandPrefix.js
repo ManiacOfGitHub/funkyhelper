@@ -19,7 +19,9 @@ module.exports = (client, logChannels, config, botContext) => {
         if(!message.content.startsWith(".")) return;
         let args = message.content.split(" ");
         let commandName = args[0].slice(1).toLowerCase();
-        var {parent_id: cmdNodeId} = getCmdNodeIdFromName.get(commandName);
+        var result = getCmdNodeIdFromName.get(commandName);
+        if(!result) return;
+        var cmdNodeId = result.parent_id;
         if(!cmdNodeId) return;
         // Check for text and embeds directly underneath
         var dataNodeInfo = searchDataNode(cmdNodeId);
