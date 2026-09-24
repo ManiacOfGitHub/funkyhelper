@@ -116,5 +116,7 @@
   "firstRankExpLength": 100,
   "clientId": "1461565616333914132",
   "guildId": "1461160219995279390",
-  "attemptPrivilegedIntents": true
+  "attemptPrivilegedIntents": true,
+  "botTrapAutoActivate": true,
+  "botTrapChannelId": "1552494825524174898"
 }

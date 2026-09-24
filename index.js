@@ -63,6 +63,12 @@ async function msgCreateHandler(message) {
 			await logChannels.important.send("An error occurred with the customCommandPrefix cog. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
 		}
 		try {
+			await cogs.botTrap.onMessage(message);
+		} catch(err) {
+			console.error(err);
+			await logChannels.important.send("An error occurred with the botTrap cog. \nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+		try {
 			await cogs.withdrawalScam.onMessage(message);
 		} catch(err) {
 			console.error(err);
@@ -433,6 +439,7 @@ async function clientReady() {
 	botContext.havePermission = havePermission;
 	botContext.exit = exit;
 	botContext.guild = await client.guilds.fetch(config.guildId);
+	botContext.msgContentIntent = msgContentIntent;
 
 	fs.readdirSync(path.join(__dirname, 'cogs')).forEach(file=>{
 		if(file.endsWith(".js")) {
