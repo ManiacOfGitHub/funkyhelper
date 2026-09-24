@@ -63,6 +63,7 @@ module.exports = (client, logChannels, config, botContext) => {
 
     async function onMessage(message) {
         if(!config.botTrapAutoActivate) return;
+        if(message.channel.id != config.botTrapChannelId) return;
         if(botContext.msgContentIntent) {
             await message.delete();
             return;
