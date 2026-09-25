@@ -370,7 +370,7 @@ async function interactionCreateHandler(interaction) {
 			let cogCommand = cogs[cogName].commands[interaction.commandName];
 			if(!cogCommand.hasOwnProperty('slash')) continue;
 			let cogArgs = {};
-			if(!interaction.options.getSubcommand()) {
+			if(!interaction.options.getSubcommand(false)) {
 				if(Array.isArray(interaction.options.data)) {
 					for(var param of interaction.options.data) {
 						cogArgs[param.name] = param.value;
