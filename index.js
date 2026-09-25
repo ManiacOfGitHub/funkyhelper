@@ -370,12 +370,19 @@ async function interactionCreateHandler(interaction) {
 			let cogCommand = cogs[cogName].commands[interaction.commandName];
 			if(!cogCommand.hasOwnProperty('slash')) continue;
 			let cogArgs = {};
-			if(Array.isArray(interaction.options.data)) {
-				for(var param of interaction.options.data) {
-					cogArgs[param.name] = param.value;
+			if(!interaction.options.getSubcommand()) {
+				if(Array.isArray(interaction.options.data)) {
+					for(var param of interaction.options.data) {
+						cogArgs[param.name] = param.value;
+					}
+				}
+			} else {
+				if(Array.isArray(interaction.options.data) && interaction.options.data.length && Array.isArray(interaction.options.data[0]?.options)) {
+					for(var param of interaction.options.data[0].options) {
+						cogArgs[param.name] = param.value;
+					}
 				}
 			}
-			// Argument processing goes here, will implement later!
 			if(!cogCommand.hasOwnProperty('handler')) {
 				await interaction.reply(`Error: \`.${commandName}\` has no command handler!`);
 				continue;
