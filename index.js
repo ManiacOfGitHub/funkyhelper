@@ -457,6 +457,8 @@ async function clientReady() {
 
 	var {promise, resolve} = Promise.withResolvers();
 	botContext.customCommandCogLoaded = promise;
+	var oldSystemCmdCount = 0;
+	var newSystemCmdCount = 0;
 
 	for(let cogName in cogs) {
 		if(cogs[cogName].hasOwnProperty("onReady")) {
@@ -469,11 +471,16 @@ async function clientReady() {
 		// TODO: Remove once all commands are migrated to new system.
 		if(cogs[cogName].hasOwnProperty("commandList")) {
 			commandList.push(...cogs[cogName].commandList);
+			oldSystemCmdCount+=cogs[cogName].commandList.length;
 		}
 		if(cogs[cogName].hasOwnProperty("commands")) {
 			commandList.push(...Object.keys(cogs[cogName].commands));
+			newSystemCmdCount+= Object.keys(cogs[cogName].commands).length;
 		}
 	}
+
+	var total = oldSystemCmdCount + newSystemCmdCount;
+	console.log(`New System Migration Status: ${newSystemCmdCount}/${total}. ${~~((newSystemCmdCount/total)*100)}% complete!`);
 
 	if(cogs.hasOwnProperty("customCommand")) {
 		botContext.customCommandCog = cogs.customCommand;
