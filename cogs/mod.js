@@ -1,7 +1,7 @@
 var {EmbedBuilder, Embed, SlashCommandBuilder, InteractionContextType, PermissionFlagsBits} = require("discord.js");
 var util = require('../util');
 
-var commandList = ["scamkick", "kick", "takehelp", "nohelp", "givehelp", "yeshelp", "appealmute", "appealsmute", "appealsunmute", "appealunmute", "modpingmute", "pingmodmute", "modpingunmute", "pingmodunmute", 'closeticketdm', 'ctdm'];
+var commandList = ['closeticketdm', 'ctdm'];
 var ms = require('ms');
 
 module.exports = (client, logChannels, config, botContext) => {
@@ -24,249 +24,6 @@ module.exports = (client, logChannels, config, botContext) => {
         if(util.hasRole(user, config.staffRoleList)) {
             await message.reply("FunkyHelper will not afflict any punishments upon staff, please do so manually.");
             return;
-        }
-
-        if(command=="scamkick") {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            try {
-                let scamKickedEmbed = new EmbedBuilder();
-                scamKickedEmbed.setTitle("Suspicious Activity");
-                scamKickedEmbed.setDescription("You have been kicked from " + message.guild.name + " due to messages that seem to be created by a bot that has hijacked your account. Once you have verified that your account is back under your control, you can rejoin [here](https://discord.gg/eVQkMaTQw2).");
-                scamKickedEmbed.setColor("DarkRed");
-                await user.send({embeds: [scamKickedEmbed]});
-                await logChannels.important.send("DM succeeded!");
-            } catch(err) {
-                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
-            }
-
-            try {
-                await logChannels.important.send("Attempting to ban user (temporarily in order to remove messages)...");
-                await user.ban({deleteMessageSeconds: 60 * 60 * 24, reason: ".scamkick run by "+message.member.user.username});
-            } catch(err) {
-                await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! ${user} was unable to be banned!\nReason: ` + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            await logChannels.important.send("Ban succeeded. Attempting to unban user...");
-            try {
-                await message.guild.bans.remove(userId);
-                await logChannels.important.send("Unban succeeded.");
-            } catch(err) {
-                await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! ${user} was unable to be unbanned! Please ensure that user is able to rejoin server.\nReason: ` + (err?(err.message??"syke lmao"):"syke lmao"));
-            }
-            var funnyOptions = config.funnyOptions;
-            await message.reply(user.user.username + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# Scammer Kicked.");
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to scam kick a user`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Scam kicked ${user.user.username} (user ID: ${userId}) from the server.`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-        if(command == "kick") {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            try {
-                let kickedEmbed = new EmbedBuilder();
-                kickedEmbed.setTitle("Moderation Action");
-                kickedEmbed.setDescription(`**You have been kicked from ${message.guild.name}.**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nYou can rejoin the server.`);
-                kickedEmbed.setColor("DarkRed");
-                await user.send({embeds: [kickedEmbed]});
-                await logChannels.important.send("DM succeeded!");
-            } catch(err) {
-                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
-            }
-
-            try {
-                await user.kick({reason: args.slice(2).join(" ")});
-            } catch(err) {
-                await message.reply("Failed to kick member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-            
-            var funnyOptions = config.funnyOptions;
-            await message.reply(user.user.username + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# Kick successful.");
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to kick a user`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Kicked ${user.user.username} (user ID: ${userId}) from the server.`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
-        if(["takehelp", "nohelp"].includes(command)) {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            try {
-                var appealsChannel = await message.guild.channels.fetch(config.appealsChannelId);
-                let noHelpEmbed = new EmbedBuilder();
-                noHelpEmbed.setTitle("Moderation Action");
-                noHelpEmbed.setDescription(`**You have lost help channel privleges in ${message.guild.name}.**\n**${args.length>2?("Reason: " + args.slice(2).join(" ")):"No reason was provided."}**\nYou can appeal in the ${appealsChannel.url} channel.`);
-                noHelpEmbed.setColor("DarkRed");
-                await user.send({embeds: [noHelpEmbed]});
-                await logChannels.important.send("DM succeeded!");
-            } catch(err) {
-                await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
-            }
-
-            try {
-                await user.roles.add(config.noHelpRoleId);
-            } catch(err) {
-                await message.reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            var funnyOptions = config.funnyOptions;
-            await message.reply(user.user.username + funnyOptions[~~(Math.random() * funnyOptions.length)] + "\n-# User lost access to help channels.");
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to remove help channel access from a user`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Gave nohelp role to ${user.user.username} (user ID: ${userId}).`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
-        if(["givehelp", "yeshelp"].includes(command)) {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-
-            try {
-                await user.roles.remove(config.noHelpRoleId);
-            } catch(err) {
-                await message.reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            await message.reply("User is now free as a bird.");
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to give help channel back to a user`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Removed nohelp role from ${user.user.username} (user ID: ${userId}).`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
-        if(["appealmute", "appealsmute"].includes(command)) {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-
-            try {
-                await user.roles.add(config.appealMuteRoleId);
-            } catch(err) {
-                await message.reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            await message.reply(`${user.user.username} can no longer speak in <#${config.appealsChannelId}>.`);
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to mute a user in <#${config.appealsChannelId}>`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Gave appealmute role to ${user.user.username} (user ID: ${userId}).`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
-        if(["appealunmute", "appealsunmute"].includes(command)) {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-
-            try {
-                await user.roles.remove(config.appealMuteRoleId);
-            } catch(err) {
-                await message.reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            await message.reply(`${user.user.username} can now speak in <#${config.appealsChannelId}>.`);
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to unmute a user in <#${config.appealsChannelId}>`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Removed appealmute role from ${user.user.username} (user ID: ${userId}).`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
-        if(["pingmodmute", "modpingmute"].includes(command)) {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-
-            try {
-                await user.roles.add(config.modPingMuteRoleId);
-            } catch(err) {
-                await message.reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            await message.reply({content:`${user.user.username} can no longer ping <@&${config.activeModeratorsId}> with \`.modping\`.`,allowedMentions:{parse:[]}});
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to mod ping mute a user.`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Gave modpingmute role to ${user.user.username} (user ID: ${userId}).`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
-        if(["pingmodunmute", "modpingunmute"].includes(command)) {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-
-            try {
-                await user.roles.remove(config.modPingMuteRoleId);
-            } catch(err) {
-                await message.reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
-                return;
-            }
-
-            await message.reply({content:`${user.user.username} can now ping <@&${config.activeModeratorsId}> with \`.modping\`.`, allowedMentions: {parse: []}});
-            let logEmbed = new EmbedBuilder();
-			logEmbed.setTitle(`.${command} was used to give \`.modping\` access back to a user.`);
-			logEmbed.setAuthor({name:message.member.user.username,iconURL:message.member.displayAvatarURL({extension:"png",size:2048})});
-			logEmbed.setDescription(`Removed modpingmute role from ${user.user.username} (user ID: ${userId}).`);
-			logEmbed.setTimestamp();
-			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
-            return;
-        }
-
-        if(["closeticketdm","ctdm"].includes(command)) {
-            try {
-                await user.fetch();
-                let ticketClosedEmbed = new EmbedBuilder();
-                let reason = args.slice(2).join(" ");
-                if(reason == "hbhelp") {
-                    reason = "Tickets are not to be used for homebrew assistance. Please ask in #help-general or a different relevant help channel and be patient.";
-                }
-                ticketClosedEmbed.setTitle(`Your ticket has been closed.`);
-                ticketClosedEmbed.setDescription(`A ticket that you opened was closed for the following reason: ${reason||"No reason was provided."}`);
-                await user.send({embeds:[ticketClosedEmbed]});
-                await message.reply("DM successful!");
-            } catch(err) {
-                await message.reply("User could not be DM'd.")
-            }
-			return;
         }
     }
 
@@ -357,6 +114,7 @@ module.exports = (client, logChannels, config, botContext) => {
         var member = await getMember(params.member);
         if(!member) return await reply("Valid member was not provided.");
         if(!helperCheck(ctx.member)) return await reply("no");
+        if(await staffCheck(member, reply)) return;
         try {
             var timeoutTime = ms(params.duration);
             if(!Number.isFinite(timeoutTime)) {
@@ -442,6 +200,265 @@ module.exports = (client, logChannels, config, botContext) => {
         logEmbed.setTimestamp();
         await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
         return;
+    }
+
+    async function scamKickCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+        if(await staffCheck(member, reply)) return;
+        try {
+            let scamKickedEmbed = new EmbedBuilder();
+            scamKickedEmbed.setTitle("Suspicious Activity");
+            scamKickedEmbed.setDescription("You have been kicked from " + botContext.guild.name + " due to messages that seem to be created by a bot that has hijacked your account. Once you have verified that your account is back under your control, you can rejoin [here](https://discord.gg/eVQkMaTQw2).");
+            scamKickedEmbed.setColor("DarkRed");
+            await member.send({embeds: [scamKickedEmbed]});
+            await logChannels.important.send("DM succeeded!");
+        } catch(err) {
+            await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+        }
+
+        try {
+            await logChannels.important.send("Attempting to ban user (temporarily in order to remove messages)...");
+            await member.ban({deleteMessageSeconds: 60 * 60 * 24, reason: commandStr(commandName, isSlash) + " run by "+ctx.member.user.username});
+        } catch(err) {
+            await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! ${member} was unable to be banned!\nReason: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+            await reply(`Failed to ban user, please check <#${logChannels.important.id}>`);
+            return;
+        }
+
+        await logChannels.important.send("Ban succeeded. Attempting to unban user...");
+        try {
+            await botContext.guild.bans.remove(userId);
+            await logChannels.important.send("Unban succeeded.");
+        } catch(err) {
+            await logChannels.important.send(`<@&${config.activeModeratorsId}> Warning! ${member} was unable to be unbanned! Please ensure that user is able to rejoin server.\nReason: ` + (err?(err.message??"syke lmao"):"syke lmao"));
+            await reply(`Failed to unban user, please check <#${logChannels.important.id}>`);
+        }
+        await funnyReply(reply, member.user.username, "Scammer Kicked.");
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to scam kick a user`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Scam kicked ${member.user.username} (user ID: ${userId}) from the server.`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function kickCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+        if(await staffCheck(member, reply)) return;
+        try {
+            let kickedEmbed = new EmbedBuilder();
+            kickedEmbed.setTitle("Moderation Action");
+            kickedEmbed.setDescription(`**You have been kicked from ${botContext.guild.name}.**\n**${params.reason?("Reason: " + params.reason):"No reason was provided."}**\nYou can rejoin the server.`);
+            kickedEmbed.setColor("DarkRed");
+            await member.send({embeds: [kickedEmbed]});
+            await logChannels.important.send("DM succeeded!");
+        } catch(err) {
+            await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+        }
+
+        try {
+            await member.kick({reason: params.reason});
+        } catch(err) {
+            await reply("Failed to kick member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await funnyReply(reply, member.user.username, "Kick successful.");
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to kick a user`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Kicked ${member.user.username} (user ID: ${userId}) from the server.`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function noHelpCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+        if(await staffCheck(member, reply)) return;
+        try {
+            var appealsChannel = await botContext.guild.channels.fetch(config.appealsChannelId);
+            let noHelpEmbed = new EmbedBuilder();
+            noHelpEmbed.setTitle("Moderation Action");
+            noHelpEmbed.setDescription(`**You have lost help channel privleges in ${botContext.guild.name}.**\n**${params.reason?("Reason: " + params.reason):"No reason was provided."}**\nYou can appeal in the ${appealsChannel.url} channel.`);
+            noHelpEmbed.setColor("DarkRed");
+            await member.send({embeds: [noHelpEmbed]});
+            await logChannels.important.send("DM succeeded!");
+        } catch(err) {
+            await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
+        }
+
+        try {
+            await member.roles.add(config.noHelpRoleId);
+        } catch(err) {
+            await reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await funnyReply(reply, member.user.username, "User lost access to help channels.");
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to remove help channel access from a user`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Gave nohelp role to ${member.user.username} (user ID: ${userId}).\n${params.reason?("Reason: " + params.reason):"No reason was provided."}`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function yesHelpCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.roles.remove(config.noHelpRoleId);
+        } catch(err) {
+            await reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await reply("User is now free as a bird.");
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to give help channel back to a user`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Removed nohelp role from ${member.user.username} (user ID: ${userId}).`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function appealMuteCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.roles.add(config.appealMuteRoleId);
+        } catch(err) {
+            await reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await reply(`${member.user.username} can no longer speak in <#${config.appealsChannelId}>.`);
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to mute a user in <#${config.appealsChannelId}>`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Gave appealmute role to ${member.user.username} (user ID: ${userId}).`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function appealUnmuteCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.roles.remove(config.appealMuteRoleId);
+        } catch(err) {
+            await reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await reply(`${member.user.username} can now speak in <#${config.appealsChannelId}>.`);
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to unmute a user in <#${config.appealsChannelId}>`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Removed appealmute role from ${member.user.username} (user ID: ${userId}).`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function modPingMuteCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.roles.add(config.modPingMuteRoleId);
+        } catch(err) {
+            await reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await reply({content:`${member.user.username} can no longer ping <@&${config.activeModeratorsId}> with \`/modping\`.`,allowedMentions:{parse:[]}});
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to mod ping mute a user.`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Gave modpingmute role to ${member.user.username} (user ID: ${userId}).`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function modPingUnmuteCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.roles.remove(config.modPingMuteRoleId);
+        } catch(err) {
+            await reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await reply({content:`${member.user.username} can now ping <@&${config.activeModeratorsId}> with \`/modping\`.`, allowedMentions: {parse: []}});
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to give \`/modping\` access back to a user.`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Removed modpingmute role from ${member.user.username} (user ID: ${userId}).`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+    
+    async function ctdmCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.fetch();
+            let ticketClosedEmbed = new EmbedBuilder();
+            let reason = params.reason;
+            if(reason == "hbhelp") {
+                reason = "Tickets are not to be used for homebrew assistance. Please ask in #help-general or a different relevant help channel and be patient.";
+            }
+            ticketClosedEmbed.setTitle(`Your ticket has been closed.`);
+            ticketClosedEmbed.setDescription(`A ticket that you opened was closed for the following reason: ${reason||"No reason was provided."}`);
+            await member.send({embeds:[ticketClosedEmbed]});
+            await reply("DM successful!");
+        } catch(err) {
+            await reply("User could not be DM'd.")
+        }
     }
 
     async function getMember(user) {
@@ -593,6 +610,209 @@ module.exports = (client, logChannels, config, botContext) => {
                     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
                 },
                 handler: untimeoutCmdHandler
+            },
+            scamkick: {
+                prefix: {
+                    name: "scamkick",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("scamkick")
+                    .setDescription("Kicks members and deletes 1 hour of messages, Helper+ only")
+                    .addUserOption(option=>option.setName("member").setDescription("The member to scam kick").setRequired(true))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: scamKickCmdHandler
+            },
+            kick: {
+                prefix: {
+                    name: "kick",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        },
+                        {
+                            name: "reason",
+                            type: "longtext",
+                            optional: true
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("kick")
+                    .setDescription("Kicks a member, Helper+ only")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .addStringOption(option=> option.setName("reason").setDescription("Optional reason to kick this user"))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: kickCmdHandler
+            },
+            nohelp: {
+                prefix: {
+                    name: "nohelp",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        },
+                        {
+                            name: "reason",
+                            type: "longtext",
+                            optional: true
+                        }
+                    ],
+                    aliases: ["takehelp"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("nohelp")
+                    .setDescription("Removes access to assistance channel for member, Helper+ only, aka takehelp")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .addStringOption(option=> option.setName("reason").setDescription("Optional reason to remove access"))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: noHelpCmdHandler
+            },
+            yeshelp: {
+                prefix: {
+                    name: "yeshelp",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ],
+                    aliases: ["givehelp"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("yeshelp")
+                    .setDescription("Gives access back to nohelped member, Helper+ only, aka givehelp")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: yesHelpCmdHandler
+            },
+            appealmute: {
+                prefix: {
+                    name: "appealmute",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ],
+                    aliases: ["appealsmute"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("appealmute")
+                    .setDescription("Makes member no longer able to speak in #appeals, Helper+ only")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: appealMuteCmdHandler
+            },
+            appealunmute: {
+                prefix: {
+                    name: "appealunmute",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ],
+                    aliases: ["appealsunmute"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("appealunmute")
+                    .setDescription("Allow appealmuted member to speak in #appeals, Helper+ only")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: appealUnmuteCmdHandler
+            },
+            modpingmute: {
+                prefix: {
+                    name: "modpingmute",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ],
+                    aliases: ["pingmodmute"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("modpingmute")
+                    .setDescription("Stop member from using /modping, Helper+ only")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: modPingMuteCmdHandler
+            },
+            modpingunmute: {
+                prefix: {
+                    name: "modpingunmute",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ],
+                    aliases: ["pingmodunmute"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("modpingunmute")
+                    .setDescription("Allows modpingmuted member to use /modping, Helper+ only")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: modPingUnmuteCmdHandler
+            },
+            closeticketdm: {
+                prefix: {
+                    name: "closeticketdm",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        },
+                        {
+                            name: "reason",
+                            type: "longtext",
+                            optional: true
+                        }
+                    ],
+                    aliases: ["ctdm"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("closeticketdm")
+                    .setDescription("DMs user with reason why ticket was closed, does not close ticket, Helper+ only, aka ctdm")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .addStringOption(option=> option.setName("reason").setDescription("Reason why ticket was closed, use \"hbhelp\" if they were asking for homebrew help."))
+                },
+                handler: ctdmCmdHandler
             }
         }
     };

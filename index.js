@@ -457,7 +457,7 @@ async function clientReady() {
 
 	var {promise, resolve} = Promise.withResolvers();
 	botContext.customCommandCogLoaded = promise;
-	var oldSystemCmdCount = 0;
+	var oldSystemCmdCount = commandList.length-1;
 	var newSystemCmdCount = 0;
 
 	for(let cogName in cogs) {
