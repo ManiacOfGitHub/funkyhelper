@@ -359,8 +359,8 @@ module.exports = (client, logChannels, config, botContext)=>{
                     data: new SlashCommandBuilder()
                     .setName("setlevel")
                     .setDescription("Set the current level of a user, Helper+ only")
-                    .addUserOption(option=>option.setName("member").setDescription("The user"))
-                    .addIntegerOption(option=>option.setName("level").setDescription("Level"))
+                    .addUserOption(option=>option.setName("member").setDescription("The user").setRequired(true))
+                    .addIntegerOption(option=>option.setName("level").setDescription("Level").setRequired(true))
                     .setContexts(InteractionContextType.Guild)
                 },
                 handler: setLevelCmdHandler
@@ -379,7 +379,7 @@ module.exports = (client, logChannels, config, botContext)=>{
                     data: new SlashCommandBuilder()
                     .setName("deluserlvls")
                     .setDescription("Remove a user from the leaderboard, Helper+ only")
-                    .addStringOption(option=>option.setName("member").setDescription("User ID to remove from leaderboard"))
+                    .addStringOption(option=>option.setName("member").setDescription("User ID to remove from leaderboard").setRequired(true))
                     .setContexts(InteractionContextType.Guild)
                 },
                 handler: delUserLvlsCmdHandler
@@ -403,8 +403,8 @@ module.exports = (client, logChannels, config, botContext)=>{
                     data: new SlashCommandBuilder()
                     .setName("setexp")
                     .setDescription("Sets the leaderboard experience for a user, Helper+ only")
-                    .addUserOption(option=>option.setName("member").setDescription("The user"))
-                    .addIntegerOption(option=>option.setName("exp").setDescription("EXP Points"))
+                    .addUserOption(option=>option.setName("member").setDescription("The user").setRequired(true))
+                    .addIntegerOption(option=>option.setName("exp").setDescription("EXP Points").setRequired(true))
                     .setContexts(InteractionContextType.Guild)
                 },
                 handler: setAddExpCmdHandler
@@ -428,8 +428,8 @@ module.exports = (client, logChannels, config, botContext)=>{
                     data: new SlashCommandBuilder()
                     .setName("addexp")
                     .setDescription("Adds leaderboard experience to the current total of a user, Helper+ only")
-                    .addUserOption(option=>option.setName("member").setDescription("The user"))
-                    .addIntegerOption(option=>option.setName("exp").setDescription("EXP Points"))
+                    .addUserOption(option=>option.setName("member").setDescription("The user").setRequired(true))
+                    .addIntegerOption(option=>option.setName("exp").setDescription("EXP Points").setRequired(true))
                     .setContexts(InteractionContextType.Guild)
                 },
                 handler: setAddExpCmdHandler

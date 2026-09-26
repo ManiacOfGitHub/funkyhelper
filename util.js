@@ -34,9 +34,14 @@ async function getMember(guild, user) {
     
 }
 
+function commandStr(commandName, isSlash) {
+    return `${isSlash?"/":"."}${commandName}`;
+}
+
 module.exports = {
     log,
     hasRole,
     ctxReplier,
-    getMember
+    getMember,
+    commandStr
 }

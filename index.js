@@ -475,7 +475,7 @@ async function clientReady() {
 		}
 		if(cogs[cogName].hasOwnProperty("commands")) {
 			commandList.push(...Object.keys(cogs[cogName].commands));
-			newSystemCmdCount+= Object.keys(cogs[cogName].commands).length;
+			newSystemCmdCount+= Object.values(cogs[cogName].commands).map(o=>o.prefix.aliases ? o.prefix.aliases.length + 1 : 1).reduce((a,b)=>(a+b),0);
 		}
 	}
 
