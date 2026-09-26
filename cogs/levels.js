@@ -1,6 +1,5 @@
-var commandList = ["setxp", "setexp", "addxp", "addexp", "deluserlvls", "setlevel"];
 var db, expFetcher, userUpdateFunction, levelUpChannel, lbPositionFunction;
-var {EmbedBuilder, AttachmentBuilder, SlashCommandBuilder} = require('discord.js');
+var {EmbedBuilder, AttachmentBuilder, SlashCommandBuilder, InteractionContextType} = require('discord.js');
 var util = require('../util');
 var canvas = require('canvas');
 var fs = require('fs');
@@ -43,85 +42,71 @@ module.exports = (client, logChannels, config, botContext)=>{
         await setExp(message.member, userExp);
     }
 
-    async function onCommand(command, args, message) {
-        if(!commandList.includes(command)) return;
-        if(["setxp","setexp","addxp","addexp"].includes(command)) {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            if(args.length < 3) {
-                await message.reply(`Not enough arguments.\nUsage: .${command} (user) (exp)`);
-                return;
-            }
-            var user, userId;
-            try {
-                userId = args[1].match(/\d+/).join("");
-                user = await message.guild.members.fetch(userId);
-                if(!user) throw Error();
-            } catch(err) {
-                await message.reply("Valid server member was not provided.");
-                return;
-            }
-            var exp = parseInt(args[2]);
-            if(!Number.isInteger(exp)) {
-                await message.reply("Invalid exp value provided.");
-                return;
-            }
-            if(["addxp","addexp"].includes(command)) {
-                var fetchedData = expFetcher.get(userId);
-                var userExp = fetchedData?.exp || 0;
-                exp+=userExp;
-            }
-            await setExp(user, exp);
-            await message.reply({content:`${user}'s experience was set to ${exp}! Their level is now ${calculateLevel(exp)}.`});
+
+    async function setAddExpCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var user = await util.getMember(botContext.guild, params.member);
+        if(!user) {
+            await reply("Valid member was not provided.");
             return;
         }
-        if(command=="setlevel") {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            if(args.length < 3) {
-                await message.reply(`Not enough arguments.\nUsage: .${command} (user) (exp)`);
-                return;
-            }
-            var user, userId;
-            try {
-                userId = args[1].match(/\d+/).join("");
-                user = await message.guild.members.fetch(userId);
-                if(!user) throw Error();
-            } catch(err) {
-                await message.reply("Valid server member was not provided.");
-                return;
-            }
-            var level = parseInt(args[2]);
-            if(!Number.isInteger(level)) {
-                await message.reply("Invalid level value provided.");
-                return;
-            }
-            var exp = (level > 1 ? ((level - 1) * config.rankExpLength) : config.firstRankExpLength * level);
-            await setExp(user, exp);
-            await message.reply({content:`${user}'s level was set to ${level}! Their experience is now ${exp}.`});
+        if(!util.hasRole(ctx.member, config.helperPlusRoleList) && !config.botOwners.includes(ctx.member.id)) {
+            await reply("no");
             return;
         }
-        if(command=="deluserlvls") {
-            if(!util.hasRole(message.member, config.helperPlusRoleList) && !config.botOwners.includes(message.member.id)) {
-                await message.channel.send("no");
-                return;
-            }
-            if(args.length < 2) {
-                await message.reply(`Not enough arguments.\nUsage: .${command} (user) (exp)`);
-                return;
-            }
-            if(!expFetcher.get(args[1])) {
-                await message.reply("User ID is not in level database.");
-                return;
-            }
-            db.prepare(`DELETE FROM user_exp WHERE user_id = ?`).run(args[1]);
-            await message.reply(`Deleted user \`${args[1]}\` from level database.`);
+        var exp = parseInt(params.exp);
+        if(!Number.isInteger(exp)) {
+            await reply("Invalid exp value provided.");
             return;
         }
+        if(["addxp","addexp"].includes(commandName)) {
+            var fetchedData = expFetcher.get(user.id);
+            var userExp = fetchedData?.exp || 0;
+            exp+=userExp;
+        }
+        await setExp(user, exp);
+        await reply({content:`${user}'s experience was set to ${exp}! Their level is now ${calculateLevel(exp)}.`});
+        return;
+    }
+
+    async function delUserLvlsCmdHandler(isSlash, params, ctx) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        if(!util.hasRole(ctx.member, config.helperPlusRoleList) && !config.botOwners.includes(ctx.member.id)) {
+            await reply("no");
+            return;
+        }
+        if(!expFetcher.get(params.member)) {
+            await reply("User ID is not in level database.");
+            return;
+        }
+        db.prepare(`DELETE FROM user_exp WHERE user_id = ?`).run(params.member);
+        await reply(`Deleted user \`${params.member}\` from level database.`);
+        return;
+    }
+
+    async function setLevelCmdHandler(isSlash, params, ctx) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var user = await util.getMember(botContext.guild, params.member);
+        if(!user) {
+            await reply("Valid member was not provided.");
+            return;
+        }
+        if(!util.hasRole(ctx.member, config.helperPlusRoleList) && !config.botOwners.includes(ctx.member.id)) {
+            await reply("no");
+            return;
+        }
+        var level = parseInt(params.level);
+        if(!Number.isInteger(level)) {
+            await reply("Invalid level value provided.");
+            return;
+        }
+        var exp = (level > 1 ? ((level - 1) * config.rankExpLength) : config.firstRankExpLength * level);
+        await setExp(user, exp);
+        await reply({content:`${user}'s level was set to ${level}! Their experience is now ${exp}.`});
+        return;
     }
 
     async function rankCmdHandler(isSlash, params, ctx) {
@@ -302,10 +287,8 @@ module.exports = (client, logChannels, config, botContext)=>{
     }
 
     return {
-        commandList,
         onReady,
         onMessage,
-        onCommand,
         commands: {
             rank: {
                 prefix: {
@@ -357,6 +340,99 @@ module.exports = (client, logChannels, config, botContext)=>{
                     .addUserOption(option=>option.setName("member").setDescription("Member whose roles to fix, defaults to you"))
                 },
                 handler: fixRolesCmdHandler
+            },
+            setlevel: {
+                prefix: {
+                    name: "setlevel",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        },
+                        {
+                            name: "level",
+                            type: "text"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("setlevel")
+                    .setDescription("Set the current level of a user, Helper+ only")
+                    .addUserOption(option=>option.setName("member").setDescription("The user"))
+                    .addIntegerOption(option=>option.setName("level").setDescription("Level"))
+                    .setContexts(InteractionContextType.Guild)
+                },
+                handler: setLevelCmdHandler
+            },
+            deluserlvls: {
+                prefix: {
+                    name: "deluserlvls",
+                    params: [
+                        {
+                            name: "member",
+                            type: "text"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("deluserlvls")
+                    .setDescription("Remove a user from the leaderboard, Helper+ only")
+                    .addStringOption(option=>option.setName("member").setDescription("User ID to remove from leaderboard"))
+                    .setContexts(InteractionContextType.Guild)
+                },
+                handler: delUserLvlsCmdHandler
+            },
+            setexp: {
+                prefix: {
+                    name: "setexp",
+                    aliases: ["setxp"],
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        },
+                        {
+                            name: "exp",
+                            type: "text"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("setexp")
+                    .setDescription("Sets the leaderboard experience for a user, Helper+ only")
+                    .addUserOption(option=>option.setName("member").setDescription("The user"))
+                    .addIntegerOption(option=>option.setName("exp").setDescription("EXP Points"))
+                    .setContexts(InteractionContextType.Guild)
+                },
+                handler: setAddExpCmdHandler
+            },
+            addexp: {
+                prefix: {
+                    name: "addexp",
+                    aliases: ["addxp"],
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        },
+                        {
+                            name: "exp",
+                            type: "text"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("addexp")
+                    .setDescription("Adds leaderboard experience to the current total of a user, Helper+ only")
+                    .addUserOption(option=>option.setName("member").setDescription("The user"))
+                    .addIntegerOption(option=>option.setName("exp").setDescription("EXP Points"))
+                    .setContexts(InteractionContextType.Guild)
+                },
+                handler: setAddExpCmdHandler
             }
         }
     }
