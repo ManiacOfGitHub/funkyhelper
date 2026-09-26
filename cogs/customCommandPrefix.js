@@ -86,7 +86,7 @@ module.exports = (client, logChannels, config, botContext) => {
                     "Switch": 0xE60012,
                     "Wii": 0x009AC7
                 }
-                if (data.color in consoleColors) {
+                if (embedNodeData.color in consoleColors) {
                     embed.setColor(consoleColors[embedNodeData.color]);
                 } else {
                     embed.setColor(parseInt(embedNodeData.color, 16));
