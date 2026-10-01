@@ -118,5 +118,6 @@
   "guildId": "1461160219995279390",
   "attemptPrivilegedIntents": true,
   "botTrapAutoActivate": true,
-  "botTrapChannelId": "1552494825524174898"
+  "botTrapChannelId": "1552494825524174898",
+  "noEmbedRoleId": "1555020795703726210"
 }

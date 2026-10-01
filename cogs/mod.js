@@ -461,6 +461,54 @@ module.exports = (client, logChannels, config, botContext) => {
         }
     }
 
+    async function noEmbedCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.roles.add(config.noEmbedRoleId);
+        } catch(err) {
+            await reply("Failed to add restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await reply({content:`${member.user.username} can no longer embed links or upload files.`,allowedMentions:{parse:[]}});
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to take embed permissions from a user.`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Gave noembed role to ${member.user.username} (user ID: ${userId}).`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
+    async function yesEmbedCmdHandler(isSlash, params, ctx, commandName) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var member = await getMember(params.member);
+        var userId = member.id;
+        if(!member) return await reply("Valid member was not provided.");
+        if(!helperCheck(ctx.member)) return await reply("no");
+
+        try {
+            await member.roles.remove(config.noEmbedRoleId);
+        } catch(err) {
+            await reply("Failed to remove restriction.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+            return;
+        }
+
+        await reply({content:`${member.user.username} can embed links and upload files now.`, allowedMentions: {parse: []}});
+        let logEmbed = new EmbedBuilder();
+        logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to give embed permissions back to a user.`);
+        logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+        logEmbed.setDescription(`Removed noembed role from ${member.user.username} (user ID: ${userId}).`);
+        logEmbed.setTimestamp();
+        await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+    }
+
     async function getMember(user) {
         try {
             var member = await botContext.guild.members.fetch(user);
@@ -813,7 +861,49 @@ module.exports = (client, logChannels, config, botContext) => {
                     .addStringOption(option=> option.setName("reason").setDescription("Reason why ticket was closed, use \"hbhelp\" if they were asking for homebrew help."))
                 },
                 handler: ctdmCmdHandler
-            }
+            },
+            noembed: {
+                prefix: {
+                    name: "noembed",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ],
+                    aliases: ["takeembed"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("noembed")
+                    .setDescription("Makes it so a member can no longer embed links")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: noEmbedCmdHandler
+            },
+            yesembed: {
+                prefix: {
+                    name: "yesembed",
+                    params: [
+                        {
+                            name: "member",
+                            type: "member"
+                        }
+                    ],
+                    aliases: ["giveembed"]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("yesembed")
+                    .setDescription("Allows a member to embed links again")
+                    .addUserOption(option=> option.setName("member").setDescription("Choose a member within the server").setRequired(true))
+                    .setContexts(InteractionContextType.Guild)
+                    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+                },
+                handler: yesEmbedCmdHandler
+            },
         }
     };
 }
