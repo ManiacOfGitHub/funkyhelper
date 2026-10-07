@@ -155,7 +155,7 @@ module.exports = (client, logChannels, config, botContext) => {
         } catch(err) {
             await logChannels.important.send("DM failed. (DMs are likely disabled by the user.) Continuing regardless...");
         }
-        
+    
         await funnyReply(reply, member.user.username, "Timeout successful.");
         let logEmbed = new EmbedBuilder();
         logEmbed.setTitle(`${commandStr(commandName, isSlash)} was used to time out a user.`);
@@ -206,8 +206,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
         if(await staffCheck(member, reply)) return;
         try {
@@ -251,8 +251,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
         if(await staffCheck(member, reply)) return;
         try {
@@ -267,7 +267,7 @@ module.exports = (client, logChannels, config, botContext) => {
         }
 
         try {
-            await member.kick({reason: params.reason});
+            await member.kick(params.reason);
         } catch(err) {
             await reply("Failed to kick member.\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
             return;
@@ -286,8 +286,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
         if(await staffCheck(member, reply)) return;
         try {
@@ -322,8 +322,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
 
         try {
@@ -346,8 +346,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
 
         try {
@@ -370,8 +370,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
 
         try {
@@ -394,8 +394,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
 
         try {
@@ -418,8 +418,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
 
         try {
@@ -465,8 +465,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
 
         try {
@@ -489,8 +489,8 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if(isSlash) await ctx.deferReply();
         var member = await getMember(params.member);
-        var userId = member.id;
         if(!member) return await reply("Valid member was not provided.");
+        var userId = member.id;
         if(!helperCheck(ctx.member)) return await reply("no");
 
         try {

@@ -119,5 +119,10 @@
   "attemptPrivilegedIntents": true,
   "botTrapAutoActivate": true,
   "botTrapChannelId": "1552494825524174898",
-  "noEmbedRoleId": "1555020795703726210"
+  "noEmbedRoleId": "1555020795703726210",
+  "warnPunishments": [
+    [5, "ban"],
+    [3, "kick"]
+  ],
+  "warnExpiry": "0.5 years"
 }
