@@ -68,7 +68,7 @@ module.exports = (client, logChannels, config) => {
             await logChannels.important.send({content: "Attachment " + (parseInt(i) + 1) + " contains the following text:", files: [textFile]});
             fs.unlinkSync(attachments[i].name);
             terms.forEach(a=>{
-                if(text.toLowerCase().includes(a)) {
+                if(text.toLowerCase().includes(a.toLowerCase())) {
                     scamCount++;
                 }
             })
