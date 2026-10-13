@@ -16,8 +16,9 @@ module.exports = (client, logChannels, config, botContext) => {
     }
 
     async function onMessage(message) {
-        if(!message.content.startsWith(".")) return;
         let args = message.content.split(" ");
+	    if(args[0] == `<@${client.user.id}>`) args = args.slice(1); 
+        if(!args[0].startsWith(".")) return;
         let commandName = args[0].slice(1).toLowerCase();
         var result = getCmdNodeIdFromName.get(commandName);
         if(!result) return;
