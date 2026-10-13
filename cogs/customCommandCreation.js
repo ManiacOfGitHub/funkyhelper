@@ -63,6 +63,7 @@ module.exports = (client, logChannels, config, botContext) => {
         if (!util.hasRole(ctx.member, config.allowRoleList)) return reply("no");
         if(isSlash) await ctx.deferReply();
         if (!fs.existsSync(`./commands/${params.command}.botcmd`)) return reply("Prefix command does not exist, cannot migrate.");
+        if(params.description.length > 100) return reply("Description cannot be more than 100 characters.");
         
         var log = "";
         var cmdNodeId = customCommand.getCmdNodeIdFromName.get(params.command);
