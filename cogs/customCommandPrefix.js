@@ -58,7 +58,7 @@ module.exports = (client, logChannels, config, botContext) => {
                 }
             }
             if(!chosenConsoleNodeId) {
-                await message.reply("Please specify a parameter. Valid options are: " + Object.values(consoleNodeNames).flat().sort().join(", ") + ".");
+                await message.reply("Please specify a parameter. Valid options are: " + [...Object.values(consoleNodeNames),...Object.values(consoleNodeNames).map(o=>config.consoleAliases[o]).filter(o=>o)].flat().sort().join(", ") + ".");
                 return;
             }
             dataNodeInfo = searchDataNode(chosenConsoleNodeId);

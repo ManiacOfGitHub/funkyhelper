@@ -6,7 +6,7 @@ var stickyMessages = {};
 var timers = {};
 var stickyMessageFile = path.resolve("./stickyMessage.json");
 
-module.exports = (client, logChannels, config) => {
+module.exports = (client, logChannels, config, botContext) => {
     async function onReady() {
         let skipChannelIds = [];
         if(fs.existsSync(stickyMessageFile)) {
@@ -94,7 +94,7 @@ module.exports = (client, logChannels, config) => {
             } else if(type=="matchmaking") {
                 var embed = new EmbedBuilder();
                 embed.setTitle("Ping to find players!");
-                embed.setDescription(`Do you wanna find members to play with? Type \`.matchmaking\` in this channel to ping <@&${config.matchmakingRoleId}>. This command can only be used every 10 minutes, please do not spam it.\n-# If you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.`);
+                embed.setDescription(`Do you wanna find members to play with? Type \`/matchmaking\` in this channel to ping <@&${config.matchmakingRoleId}>. This command can only be used every 10 minutes, please do not spam it.\n-# If you do not wish to receive these pings, go to <id:customize> and remove the Matchmaking role.`);
             } else if(type=="appeals") {
                 var embed = new EmbedBuilder();
                 embed.setTitle(`No Chatting, Appeals Only!`);
@@ -105,12 +105,19 @@ module.exports = (client, logChannels, config) => {
                 embed.setTitle(`FunkyMC is down!`);
                 embed.setDescription(`FunkyMC is offline for maintenance. Please check back again later.`);
                 embed.setColor("Red");
+            } else if(type=="noMsgIntent") {
+                if(botContext.msgContentIntent) continue;
+                var embed = new EmbedBuilder();
+                embed.setTitle("You must ping me to use bot commands!");
+                embed.setDescription(`Due to not having access to message content intents, you must ping me at the start of a bot command.\n\nFor example, to run \`.games 3ds\`, you must say:\n\n<@${client.user.id}> .games 3ds\n\nAlternatively, you can use the slash (/) command variants.`);
+                embed.setColor("Gold");
             } else {
                 logChannels.important.send(`Sticky message type \`${type}\` does not exist. (Creating sticky messsage in ${channel})`);
                 continue;
             }
             embeds.push(embed);
         }
+        if(!embeds.length) return;
         try {
             let message = await channel.send({embeds});
             stickyMessages[channel.id] = message.id;

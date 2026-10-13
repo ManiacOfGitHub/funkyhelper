@@ -84,10 +84,11 @@ async function msgCreateHandler(message) {
 	})();
 
 	let args = message.content.split(" ");
+	if(args[0] == `<@${client.user.id}>`) args = args.slice(1); 
 	let commandName = (args[0] ? args[0].slice(1) : "").toLowerCase();
 	await processWikiCommands(message);
 
-	if(message.content.startsWith(".")) {
+	if(args[0].startsWith(".")) {
 		for(let cogName in cogs) {
 			// Legacy Command Handler, will be removed once all cogs have been migrated.
 			if(cogs[cogName].hasOwnProperty('onCommand')) {

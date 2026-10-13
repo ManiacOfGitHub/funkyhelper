@@ -4,14 +4,15 @@ var {EmbedBuilder} = require("discord.js");
 
 module.exports = (client, logChannels, config, botContext) => {
     async function onCommand(commandName, args, message) {
-        if (message.content.startsWith(".") && fs.existsSync(`./alias/${commandName}.alias`)) {
+        if (fs.existsSync(`./alias/${commandName}.alias`)) {
             try {
                 commandName = fs.readFileSync(`./alias/${commandName}.alias`, 'utf8');
             } catch(err) {
                 console.log(`Could not fetch alias ${commandName}`);
             }
         }
-        if (message.content.startsWith(".") && fs.existsSync(`./commands/${commandName}.botcmd`)) {
+        
+        if (fs.existsSync(`./commands/${commandName}.botcmd`)) {
             fs.readFile(`./commands/${commandName}.botcmd`, 'utf8', async (err, commandContent) => {
                 if (commandContent === "" || commandContent === null) {
                     return message.reply("Command content is empty.");

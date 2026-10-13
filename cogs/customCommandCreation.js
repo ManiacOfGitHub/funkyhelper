@@ -92,7 +92,6 @@ module.exports = (client, logChannels, config, botContext) => {
         db.transaction(()=>{
             let info = db.prepare(`INSERT INTO command_nodes (type) VALUES ('command')`).run();
             var cmdNodeId = info.lastInsertRowid;
-            console.log(cmdNodeId);
             db.prepare(`INSERT INTO commands (node_id, description) VALUES (?, ?)`).run(cmdNodeId, params.description);
             info = db.prepare(`INSERT INTO command_nodes (parent_id, type) VALUES (?, 'commandname')`).run(cmdNodeId);
             db.prepare(`INSERT INTO command_names (node_id, name, primary_name) VALUES (?, ?, 1)`).run(info.lastInsertRowid, params.command);
