@@ -62,10 +62,10 @@ module.exports = (client, logChannels, config, botContext) => {
         var reply = util.ctxReplier(ctx, isSlash);
         if (!util.hasRole(ctx.member, config.allowRoleList)) return reply("no");
         if(isSlash) await ctx.deferReply();
-        if (!fs.existsSync(`./commands/${params.commandName}.botcmd`)) return reply("Prefix command does not exist, cannot migrate.");
+        if (!fs.existsSync(`./commands/${params.command}.botcmd`)) return reply("Prefix command does not exist, cannot migrate.");
         
         var log = "";
-        var cmdNodeId = customCommand.getCmdNodeIdFromName.get(params.commandName);
+        var cmdNodeId = customCommand.getCmdNodeIdFromName.get(params.command);
         if(cmdNodeId) {
             log += "Command already exists in new system, overwriting...\n";
             db.prepare(`DELETE FROM command_nodes WHERE id = ?`).run(cmdNodeId.id);
@@ -75,7 +75,7 @@ module.exports = (client, logChannels, config, botContext) => {
         var cmdAliases = [];
         for(var alias of files) {
             if(!alias.endsWith(".alias")) continue;
-            if(fs.readFileSync(`./alias/${alias}`, "utf8") == params.commandName) {
+            if(fs.readFileSync(`./alias/${alias}`, "utf8") == params.command) {
                 cmdAliases.push(alias.replace(".alias",""));
             }
         }
@@ -85,7 +85,7 @@ module.exports = (client, logChannels, config, botContext) => {
             log += "No aliases found.\n";
         }
 
-        var commandContent = fs.readFileSync(`./commands/${params.commandName}.botcmd`, 'utf8');
+        var commandContent = fs.readFileSync(`./commands/${params.command}.botcmd`, 'utf8');
         
 
         db.transaction(()=>{
@@ -94,7 +94,7 @@ module.exports = (client, logChannels, config, botContext) => {
             console.log(cmdNodeId);
             db.prepare(`INSERT INTO commands (node_id, description) VALUES (?, ?)`).run(cmdNodeId, params.description);
             info = db.prepare(`INSERT INTO command_nodes (parent_id, type) VALUES (?, 'commandname')`).run(cmdNodeId);
-            db.prepare(`INSERT INTO command_names (node_id, name, primary_name) VALUES (?, ?, 1)`).run(info.lastInsertRowid, params.commandName);
+            db.prepare(`INSERT INTO command_names (node_id, name, primary_name) VALUES (?, ?, 1)`).run(info.lastInsertRowid, params.command);
             for(var alias of cmdAliases) {
                 info = db.prepare(`INSERT INTO command_nodes (parent_id, type) VALUES (?, 'commandname')`).run(cmdNodeId);
                 db.prepare(`INSERT INTO command_names (node_id, name, primary_name) VALUES (?, ?, 0)`).run(info.lastInsertRowid, alias);
@@ -230,7 +230,7 @@ module.exports = (client, logChannels, config, botContext) => {
             }
         }
         log += "Deleting old command...\n";
-        fs.unlinkSync(`./commands/${params.commandName}.botcmd`);
+        fs.unlinkSync(`./commands/${params.command}.botcmd`);
 
 
         log += "Complete!";
@@ -256,7 +256,7 @@ module.exports = (client, logChannels, config, botContext) => {
                     name: "migrate",
                     params: [
                         {
-                            name: "commandName",
+                            name: "command",
                             type: "text"
                         },
                         {
