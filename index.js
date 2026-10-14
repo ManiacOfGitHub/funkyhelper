@@ -448,6 +448,7 @@ async function clientReady() {
 	botContext.exit = exit;
 	botContext.guild = await client.guilds.fetch(config.guildId);
 	botContext.msgContentIntent = msgContentIntent;
+	botContext.generateWikiPage = generateWikiPage;
 
 	fs.readdirSync(path.join(__dirname, 'cogs')).forEach(file=>{
 		if(file.endsWith(".js")) {

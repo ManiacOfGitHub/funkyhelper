@@ -157,6 +157,19 @@ module.exports = (client, logChannels, config, botContext) => {
         }
     }
 
+    async function wikiCmdHandler(isSlash, params, ctx) {
+        var reply = util.ctxReplier(ctx, isSlash);
+        if(isSlash) await ctx.deferReply();
+        var wikiURL = await botContext.generateWikiPage(params.wikicmd);
+        if(!wikiURL) {
+            return await reply("Failed to generate URL.");
+        }
+        if(wikiURL == "failed") {
+            return await reply("Failed to generate URL, wiki is likely down.");
+        }
+        return await reply(wikiURL);
+    }
+
     async function processTimers() {
         if(matchmakingTimer > 0) {
             matchmakingTimer--;
@@ -273,8 +286,8 @@ module.exports = (client, logChannels, config, botContext) => {
                     name: "source",
                     params: [
                         {
-                            "name": "command",
-                            "type": "text"
+                            name: "command",
+                            type: "text"
                         }
                     ]
                 },
@@ -285,6 +298,24 @@ module.exports = (client, logChannels, config, botContext) => {
                     .addStringOption(option=>option.setName("command").setDescription("Name of command").setRequired(true))
                 },
                 handler: sourceCmdHandler
+            },
+            wiki: {
+                prefix: {
+                    name: "wiki",
+                    params: [
+                        {
+                            name: "wikicmd",
+                            type: "longtext"
+                        }
+                    ]
+                },
+                slash: {
+                    data: new SlashCommandBuilder()
+                    .setName("wiki")
+                    .setDescription("Fetch a link with the wiki.hacks.guide API")
+                    .addStringOption(option=>option.setName("wikicmd").setDescription("The wiki command. e.g. 3DS:BSU").setRequired(true))
+                },
+                handler: wikiCmdHandler
             }
         },
         processTimers
