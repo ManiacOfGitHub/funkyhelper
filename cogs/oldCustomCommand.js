@@ -90,7 +90,7 @@ module.exports = (client, logChannels, config, botContext) => {
                     }
                 }
                 options = options.flat();
-                await message.reply("Please specify a parameter. Valid options are: " + options.sort().join(", ") + ".");
+                await message.reply("Please specify a parameter. Valid options are: " + options.sort((a, b)=>a.localeCompare(b, undefined, {numeric: true})).join(", ") + ".");
                 return;
             }
             if (data.random) {
