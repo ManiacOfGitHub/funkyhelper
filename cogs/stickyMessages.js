@@ -106,7 +106,6 @@ module.exports = (client, logChannels, config, botContext) => {
                 embed.setDescription(`FunkyMC is offline for maintenance. Please check back again later.`);
                 embed.setColor("Red");
             } else if(type=="noMsgIntent") {
-                if(botContext.msgContentIntent) continue;
                 var embed = new EmbedBuilder();
                 embed.setTitle("You must ping me to use bot commands!");
                 embed.setDescription(`Due to not having access to message content intents, you must ping me at the start of a bot command.\n\nFor example, to run \`.games 3ds\`, you must say:\n\n<@${client.user.id}> .games 3ds\n\nAlternatively, you can use the slash (/) command variants.`);
