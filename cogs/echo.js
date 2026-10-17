@@ -1,8 +1,8 @@
 var util = require('../util');
-var {EmbedBuilder} = require("discord.js");
-var commandList = ["echo", "say", "echobypass", "saybypass", "reply", "replybypass", "edit", "editbypass"]
+var {EmbedBuilder, SlashCommandBuilder, InteractionContextType, MessageFlags} = require("discord.js");
+var commandList = ["reply", "replybypass", "edit", "editbypass"]
 
-module.exports = (client, logChannels, config) => {
+module.exports = (client, logChannels, config, botContext) => {
     async function onCommand(command, args, message) {
  	    if(!commandList.includes(command)) return;
 		var bypassMode = command.endsWith("bypass");
@@ -19,52 +19,28 @@ module.exports = (client, logChannels, config) => {
         let channel, channelId, messageId, messageToUse, sliceAt
 
         if (args.length === 1) return message.reply("Not enough arguments");
-        if (["echo", "say", "echobypass", "saybypass"].includes(command)) {
-		    channelId = args[1].matchAll(/\d/g).toArray().join("");
-		    if(channelId) {
-			    try {
-				    channel = await message.guild.channels.fetch(channelId);
-                    if (args.length < 3) return message.reply("Not enough arguments");
-                    channelId = channel.id;
-			        sliceAt = 2;
-			    } catch { // this makes it work when pinging at the start for some reason
-                    if (args.length < 2) return message.reply("Not enough arguments");
-    		            channelId = message.channel.id;
-        		    channel = await message.guild.channels.fetch(channelId);
-		            sliceAt = 1;
-                }
-            } else {
-                if (args.length < 2) return message.reply("Not enough arguments");
-		        channelId = message.channel.id;
-    		    channel = await message.guild.channels.fetch(channelId);
-		        sliceAt = 1;
-            }
-               
-
+		var autoMode = !!message.reference;
+		if(args.length < (autoMode ? 2 : 4)) return message.reply("Not enough arguments");
+		sliceAt = autoMode ? 2 : 4;
+		if (!autoMode) {
+			channelId = args[1].matchAll(/\d/g).toArray().join("");
+			messageId = args[2].matchAll(/\d/g).toArray().join("");
+			try {
+				channel = await message.guild.channels.fetch(channelId);
+				messageToUse = await channel.messages.fetch(messageId);
+			} catch (err) {
+				if (!channel) {return message.reply("No valid channel provided.");
+				} else if (!messageToUse) {return message.reply("No valid message provided.");
+				}
+			}
+			sliceAt = 3;
 		} else {
-            var autoMode = !!message.reference;
-		    if(args.length < (autoMode ? 2 : 4)) return message.reply("Not enough arguments");
-		    sliceAt = autoMode ? 2 : 4;
-            if (!autoMode) {
-               	channelId = args[1].matchAll(/\d/g).toArray().join("");
-                messageId = args[2].matchAll(/\d/g).toArray().join("");
-                try {
-				    channel = await message.guild.channels.fetch(channelId);
-				    messageToUse = await channel.messages.fetch(messageId);
-                } catch (err) {
-                    if (!channel) {return message.reply("No valid channel provided.");
-                    } else if (!messageToUse) {return message.reply("No valid message provided.");
-                    }
-                }
-                sliceAt = 3;
-		    } else {
-                channel = message.channel;
-                messageId = (await message.fetchReference());
-                channelId = message.channel.id; 
-                messageToUse = await channel.messages.fetch(messageId);
-                sliceAt = 1;
-            }
-        }
+			channel = message.channel;
+			messageId = (await message.fetchReference());
+			channelId = message.channel.id; 
+			messageToUse = await channel.messages.fetch(messageId);
+			sliceAt = 1;
+		}
         
         if (["edit", "editbypass"].includes(command)) {
             if(messageToUse.author.id != client.user.id) {
@@ -79,13 +55,7 @@ module.exports = (client, logChannels, config) => {
 			return;
 		}	
 		try {
-            if (["echo", "say", "echobypass", "saybypass"].includes(command)) {
-			    if(bypassMode) {
-				    var sentMessage = await channel.send({content:args.slice(sliceAt).join(" "),allowedMentions:{parse:['roles','users','everyone']}});
-			    } else {
-				    var sentMessage = await channel.send(args.slice(sliceAt).join(" "));
-			    }
-            } else if (["reply", "replybypass"].includes(command)) {
+            if (["reply", "replybypass"].includes(command)) {
                 if(bypassMode) {
 				    var sentMessage = await messageToUse.reply({content:args.slice(sliceAt).join(" "),allowedMentions:{parse:['roles','users','everyone'],repliedUser:true}});
 			    } else {
@@ -123,9 +93,125 @@ module.exports = (client, logChannels, config) => {
 		}
         return;
     
-	}	
+	}
+
+	async function sayCmdHandler(isSlash, params, ctx, commandName) {
+		var reply = util.ctxReplier(ctx, isSlash);
+		if(isSlash) await ctx.deferReply({flags: MessageFlags.Ephemeral});
+		var bypassMode = commandName.endsWith("bypass") || params.bypass;
+		if(bypassMode) {
+			if(!util.hasRole(ctx.member, config.moderatorRole) && !config.botOwners.includes(ctx.member.id)) {
+				return reply("no");
+			}
+		} else {
+			if (!util.hasRole(ctx.member, config.staffRoleList)) {
+				return reply("no");
+			}
+        }
+		
+		var content = params.content;
+
+		let channel, channelId, channelSpecified;
+
+		channelId = params.channel ? params.channel.toString().matchAll(/\d/g).toArray().join("") : "";
+		if(channelId) {
+			try {
+				channel = await botContext.guild.channels.fetch(channelId);
+				channelId = channel.id;
+				channelSpecified = true;
+			} catch {
+				channelId = ctx.channel.id;
+				channel = await ctx.guild.channels.fetch(channelId);
+				if(!isSlash) content = `${params.channel} ${content}`;
+				channelSpecified = false;
+			}
+		} else {
+			channelId = ctx.channel.id;
+			channel = await ctx.guild.channels.fetch(channelId);
+			if(!isSlash) content = `${params.channel} ${content}`;
+			channelSpecified = false;
+		}
+
+		if((!config.echoChannelIds.includes(channelId)) && !util.hasRole(ctx.member, config.moderatorRole) && !config.botOwners.includes(ctx.member.id)) {
+			await reply(`You cannot \`${util.commandStr(commandName, isSlash)}\` into ${channelSpecified?"that":"this"} channel. You can \`${util.commandStr(commandName, isSlash)}\` into: ${config.echoChannelIds.map(o=>`<#${o}>`).join(", ")}`);
+			return;
+		}
+		try {
+			if(bypassMode) {
+				var sentMessage = await channel.send({content,allowedMentions:{parse:['roles','users','everyone']}});
+			} else {
+				var sentMessage = await channel.send(content);
+			}
+			if(isSlash) await reply({content:'Sent.',flags:MessageFlags.Ephemeral});
+			let logEmbed = new EmbedBuilder();
+			logEmbed.setAuthor({name:ctx.member.user.username,iconURL:ctx.member.displayAvatarURL({extension:"png",size:2048})});
+			logEmbed.setTimestamp();
+			logEmbed.setTitle(`${util.commandStr(commandName, isSlash)} was used to send a message`);
+			logEmbed.setDescription(`Sent [a message](${sentMessage.url}) in <#${channelId}>:\n${content}`);
+			logEmbed.setFooter({text:"ID: " + sentMessage.id});
+			await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
+		} catch(err) {
+			console.error(err);
+			await logChannels.important.send("Failed to send message (does the bot have permission to speak there?)\nError info: " + (err?(err.message??"syke lmao"):"syke lmao"));
+		}
+		if(!isSlash) {
+			try {
+				await ctx.delete();
+			} catch(err) {
+				//I really don't care enough to do anything with this.
+			}
+		}
+	}
+
     return {
         onCommand,
-		commandList
+		commandList,
+		commands: {
+			say: {
+				prefix: {
+					name: "say",
+					aliases: ["echo"],
+					params: [
+						{
+							name: "channel",
+							type: "text"
+						},
+						{
+							name: "content",
+							type: "longtext",
+							optional: true
+						}
+					]
+				},
+				slash: {
+					data: new SlashCommandBuilder()
+					.setName("say")
+					.setDescription("Echos a message as a bot in a channel, Staff only")
+					.addStringOption(option=>option.setName("content").setDescription("The message to send").setRequired(true))
+					.addChannelOption(option=>option.setName("channel").setDescription("The channel to send the message in"))
+					.addBooleanOption(option=>option.setName("bypass").setDescription("Bypass mode, lets the bot ping anyone, Moderator+ only"))
+					.setContexts(InteractionContextType.Guild)
+				},
+				handler: sayCmdHandler
+			},
+			saybypass: {
+				prefix: {
+					name: "saybypass",
+					aliases: ["echobypass"],
+					params: [
+						{
+							name: "channel",
+							type: "text"
+						},
+						{
+							name: "content",
+							type: "longtext",
+							optional: true
+						}
+					]
+				},
+				handler: sayCmdHandler
+			}
+		}
     }
 }

@@ -47,8 +47,12 @@ function defineClient(usePrivilegedIntents) {
 async function msgCreateHandler(message) {
 	if (!message.guild || message.author.bot) return;
 	if(!cogsLoaded) {
-		if(message.content && message.content.startsWith(".")) {
-			await message.reply("Please wait before sending any commands, the bot is currently restarting...");
+		if(message.content && message.content.startsWith(`<@${client.user.id}>`)) {
+			try {
+				await message.reply("Please wait before sending any commands, the bot is currently restarting...");
+			} catch(err) {
+				
+			}
 		}
 		return;
 	}
@@ -83,10 +87,15 @@ async function msgCreateHandler(message) {
 		}
 	})();
 
-	let args = message.content.split(" ");
-	if(args[0] == `<@${client.user.id}>`) args = args.slice(1); 
-	let commandName = (args[0] ? args[0].slice(1) : "").toLowerCase();
 	await processWikiCommands(message);
+
+	let args = message.content.split(" ");
+	if(args[0] != `<@${client.user.id}>`) {
+		return;
+	}
+	args = args.slice(1); 
+	let commandName = (args[0] ? args[0].slice(1) : "").toLowerCase();
+	
 
 	if(args[0].startsWith(".")) {
 		for(let cogName in cogs) {
@@ -174,8 +183,12 @@ async function msgCreateHandler(message) {
 						await cogCommand.handler(false, cogArgs, message, commandName);
 					} catch(err) {
 						console.error(err);
-						await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
-						await message.reply(`An unhandled exception occurred when executing the command. It has been logged in a staff-only channel. Please contact a Bot Maintainer for more information.`);
+						try {
+							await logChannels.important.send(`An error occurred with the ${cogName} cog.\nError info: ${err?(err.message??"syke lmao"):"syke lmao"}`);
+							await message.reply(`An unhandled exception occurred when executing the command. It has been logged in a staff-only channel. Please contact a Bot Maintainer for more information.`);
+						} catch(err) {
+
+						}
 					}
 				}
 			}
@@ -183,7 +196,7 @@ async function msgCreateHandler(message) {
 	}
 
 	// Alias create command
-	if (message.content.split(" ")[0] === ".alias") {
+	if (commandName == "alias") {
 		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to create aliases.");
 		}
@@ -208,7 +221,7 @@ async function msgCreateHandler(message) {
 	}
 
 	// Alias delete command
-	if (message.content.split(" ")[0] === ".deletealias") {
+	if (commandName == "deletealias") {
 		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to delete aliases.");
 		}
@@ -229,7 +242,7 @@ async function msgCreateHandler(message) {
 	}
 
 	// Alias help command
-	if (message.content.split(" ")[0] === ".helpalias") {
+	if (commandName == "helpalias") {
 		fs.readdir('./alias', (err, files) => {
 			if (err) return message.reply("Error reading aliases.");
 			const aliasList = files.filter(file => file.endsWith('.alias')).map(file => file.replace('.alias', '')).sort();
@@ -238,7 +251,7 @@ async function msgCreateHandler(message) {
 		return;
 	}
 
-	if (message.content.split(" ")[0] === ".create") {
+	if (commandName == "create") {
 		let commandName = args[1];
 		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to create commands.");
@@ -262,7 +275,7 @@ async function msgCreateHandler(message) {
 		});
 	}
 
-	if (message.content.split(" ")[0] === ".delete") {
+	if (commandName == "delete") {
 		let commandName = args[1];
 		if (!havePermission(message.member)) {
 			return message.reply("You do not have permission to delete commands.");
@@ -282,15 +295,7 @@ async function msgCreateHandler(message) {
 		});
 	}
 
-	if (message.content.split(" ")[0] === ".help") {
-		fs.readdir('./commands', (err, files) => {
-			if (err) return message.reply("Error reading commands.");
-			const commandList = files.filter(file => file.endsWith('.botcmd')).map(file => file.replace('.botcmd', '')).sort();
-			message.reply("Commands: " + (commandList.length ? commandList.join(", ") : "None"));
-		});
-	}
-
-	if(message.content.split(" ")[0].toLowerCase() == ".upload") {
+	if(commandName == "upload") {
 		if(!havePermission(message.member)) {
 			return message.reply("You do not have permission to upload commands to the bot.");
 		}

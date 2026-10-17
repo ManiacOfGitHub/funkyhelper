@@ -1,31 +1,9 @@
 var {EmbedBuilder, Embed, SlashCommandBuilder, InteractionContextType, PermissionFlagsBits} = require("discord.js");
 var util = require('../util');
 
-var commandList = ['closeticketdm', 'ctdm'];
 var ms = require('ms');
 
 module.exports = (client, logChannels, config, botContext) => {
-    async function onCommand(command, args, message) {
-        if(!commandList.includes(command)) return;
-        if(args < 2) {
-            await message.channel.send("Not enough arguments.");
-            return;
-        }
-        var userId;
-        var user;
-        try {
-            userId = args[1].match(/\d+/).join("");
-            user = await message.guild.members.fetch(userId);
-            if(!user) throw Error();
-        } catch(err) {
-            await message.reply("Valid server member was not provided.");
-            return;
-        }
-        if(util.hasRole(user, config.staffRoleList)) {
-            await message.reply("FunkyHelper will not afflict any punishments upon staff, please do so manually.");
-            return;
-        }
-    }
 
     async function banCmdHandler(isSlash, params, ctx, commandName) {
         if(isSlash) await ctx.deferReply();
@@ -545,8 +523,6 @@ module.exports = (client, logChannels, config, botContext) => {
     }
 
     return {
-        onCommand,
-        commandList,
         commands: {
             ban: {
                 prefix: {

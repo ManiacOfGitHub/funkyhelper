@@ -40,7 +40,7 @@ module.exports = (client, logChannels, config, botContext) => {
     }
 
     async function onMessage(message) {
-        if(config.stickyMessageChannels.hasOwnProperty(message.channel.id) && Object.keys(stickyMessages).includes(message.channel.id)) {
+        if(config.stickyMessageChannels.hasOwnProperty(message?.channel?.id) && Object.keys(stickyMessages).includes(message?.channel?.id)) {
             timers[message.channel.id] = 120;
         }
     }
@@ -108,7 +108,7 @@ module.exports = (client, logChannels, config, botContext) => {
             } else if(type=="noMsgIntent") {
                 var embed = new EmbedBuilder();
                 embed.setTitle("You must ping me to use bot commands!");
-                embed.setDescription(`Due to not having access to message content intents, you must ping me at the start of a bot command.\n\nFor example, to run \`.games 3ds\`, you must say:\n\n<@${client.user.id}> .games 3ds\n\nAlternatively, you can use the slash (/) command variants.`);
+                embed.setDescription(`Due to new rules about how Discord bot commands must function, you must ping me at the start of a prefix command.\n\nFor example, to run \`.games 3ds\`, you must say:\n\n<@${client.user.id}> .games 3ds\n\nAlternatively, you can use the slash (/) command variants.`);
                 embed.setColor("Gold");
             } else {
                 logChannels.important.send(`Sticky message type \`${type}\` does not exist. (Creating sticky messsage in ${channel})`);
