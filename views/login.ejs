@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FunkyHelper - Staff Login</title>
+        <%- include("partials/bootstrap.ejs") %>
+    </head>
+    <body>
+        <%- include("partials/navbar.ejs") %>
+        <div class="container my-5">
+            <h1 class="fs-1 text-center">Staff Login</h1>
+            <hr>
+            <div class="alert alert-primary">This is intended to be used only by Bot Maintainers and Owners for managing bot settings.<br>If you are not a staff member, this page will not do anything for you.</div>
+            <hr>
+            <div class="text-center">
+                <a href="<%- callbackUrl %>" class="btn btn-primary text-center fs-4">
+                    <i class="bi bi-discord pe-2"></i>
+                    Login with Discord
+                </a>
+            </div>
+        </div>
+    </body>
+</html>

@@ -4,6 +4,7 @@ var path = require("path");
 var port, config;
 
 app.use(express.static('public'));
+app.use("/icons", express.static('node_modules/bootstrap-icons/font'))
 app.set('view engine', 'ejs');
 
 
@@ -13,8 +14,15 @@ app.get("/", (req, res)=>{
 
 app.get("/privacy", (req, res)=>{
     res.render('privacy', {active: 'privacy'});
-})
+});
 
+app.get("/auth/login", (req, res)=> {
+    res.render('login', {active: 'login', callbackUrl: config.callbackUrl});
+});
+
+app.get("/auth/callback", (req, res)=> {
+    res.render('callback', {active: 'callback'});
+});
 
 async function init(sentConfig) {
     config = sentConfig;
