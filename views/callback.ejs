@@ -11,7 +11,12 @@
         <div class="container my-5">
             <h1 class="fs-1 text-center">Staff Login</h1>
             <hr>
+            <% if (!locals.error) { %>
             <div class="alert alert-secondary">Nothing here for now! Come back again later.</div>
+            <script src="/loginCheck.js"></script>
+            <% } else { %>
+            <div class="alert alert-danger">An error has occurred:<br><%= error %></div>
+            <% } %>
         </div>
     </body>
 </html>

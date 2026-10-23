@@ -21,6 +21,14 @@ app.get("/auth/login", (req, res)=> {
 });
 
 app.get("/auth/callback", (req, res)=> {
+    if(req?.query?.error) {
+        if(req.query.error == "access_denied") {
+            res.redirect("/auth/login");
+            return;
+        }
+        res.render('callback', {active: 'callback', error: req.query.error_description || req.query.error});
+        return;
+    }
     res.render('callback', {active: 'callback'});
 });
 
