@@ -112,7 +112,7 @@ module.exports = (client, logChannels, config, botContext) => {
                 embed.setColor("Gold");
             } else if(type=="noAssist") {
                 var embed = new EmbedBuilder();
-                embed.setTitle(`No Homebrew Assistance!`};
+                embed.setTitle(`No Homebrew Assistance!`);
                 embed.setDescription("Homebrew assistance will not be given within this channel. Please go to #help-general for assistance.");
                 embed.setFooter({text:"General discussion of homebrew and tech is still allowed."});
                 embed.setColor("Gold");
