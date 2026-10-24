@@ -113,7 +113,7 @@ module.exports = (client, logChannels, config, botContext) => {
             } else if(type=="noAssist") {
                 var embed = new EmbedBuilder();
                 embed.setTitle(`No Homebrew Assistance!`);
-                embed.setDescription("Homebrew assistance will not be given within this channel. Please go to https://discord.com/channels/1041089944673853490/1107715979510829126 or the corresponding channel for assistance.");
+                embed.setDescription(`Homebrew assistance will not be given within this channel. Please go to <#${config.helpGeneralChannelId}> or the corresponding channel for assistance.`);
                 embed.setFooter({text:"General discussion of homebrew and tech is still allowed."});
                 embed.setColor("Gold");
             } else {

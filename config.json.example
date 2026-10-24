@@ -125,5 +125,6 @@
     [3, "kick"]
   ],
   "warnExpiry": "0.5 years",
-  "callbackUrl": "https://discord.com/oauth2/authorize?client_id=1461565616333914132&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&scope=identify"
+  "callbackUrl": "https://discord.com/oauth2/authorize?client_id=1461565616333914132&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&scope=identify",
+  "helpGeneralChannelId": "1461160222302273584"
 }
