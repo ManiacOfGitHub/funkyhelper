@@ -110,6 +110,12 @@ module.exports = (client, logChannels, config, botContext) => {
                 embed.setTitle("You must ping me to use bot commands!");
                 embed.setDescription(`Due to new rules about how Discord bot commands must function, you must ping me at the start of a prefix command.\n\nFor example, to run \`.games 3ds\`, you must say:\n\n<@${client.user.id}> .games 3ds\n\nAlternatively, you can use the slash (/) command variants.`);
                 embed.setColor("Gold");
+            } else if(type=="noAssist") {
+                var embed = new EmbedBuilder();
+                embed.setTitle(`No Homebrew Assistance!`};
+                embed.setDescription("Homebrew assistance will not be given within this channel. Please go to #help-general for assistance.");
+                embed.setFooter({text:"General discussion of homebrew and tech is still allowed."});
+                embed.setColor("Gold");
             } else {
                 logChannels.important.send(`Sticky message type \`${type}\` does not exist. (Creating sticky messsage in ${channel})`);
                 continue;
