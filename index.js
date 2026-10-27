@@ -496,13 +496,17 @@ async function clientReady() {
 
 	cogsLoaded = true;
 
-	await web.init(config);
+	await web.init(config, botContext);
 
 	setInterval(processTimers, 1000);
 };
 
 (async()=>{
 	try {
+		if(!config.token || config.token == "TOKEN_GOES_HERE") {
+			console.log("Token was not set! Bot cannot start.");
+			return;
+		}
 		await client.login(config.token);
 	} catch(err) {
 		if(err.message == "Used disallowed intents") {

@@ -29,7 +29,7 @@ module.exports = (client, logChannels, config, botContext) => {
 				notChanged.push(i);
 				continue;
 			}
-			if(i=="token") {
+			if(["token","clientSecret"].includes(i)) {
 				notChanged.push(i);
 				continue;
 			}
@@ -57,7 +57,7 @@ module.exports = (client, logChannels, config, botContext) => {
 		logEmbed.setTimestamp();
 		await logChannels.important.send({embeds: [logEmbed],allowedMentions:{parse:[]}});
 
-		var notChangedStr = notChanged.map(prop=>`\`${prop}\`${prop=="token"?" (what is wrong with you)":""}`).join(", ");
+		var notChangedStr = notChanged.map(prop=>`\`${prop}\`${["token","clientSecret"].includes(prop)?" (what is wrong with you)":""}`).join(", ");
 		if(changedSomething) {
 			if(notChanged.length > 0) {
 				await reply(`The following properties could not be set due to you not being a Bot Owner:\n${notChangedStr}\nAll other properties were successfully set.`);
@@ -66,7 +66,7 @@ module.exports = (client, logChannels, config, botContext) => {
 			}
 		} else {
 			if(notChanged.length > 0) {
-				await reply(`None of the properties specified were able to be set due to you not being a Bot Owner.${notChanged.includes("token")?" Well, actually, it's because you tried to set the token. What is wrong with you?":""}`);
+				await reply(`None of the properties specified were able to be set due to you not being a Bot Owner.${notChanged.includes("token")||notChanged.includes("clientSecret")?" Well, actually, it's because you tried to set the token or clientSecret. What is wrong with you?":""}`);
 			} else {
 				await reply(`No properties were specified.`);
 			}
@@ -82,7 +82,7 @@ module.exports = (client, logChannels, config, botContext) => {
 		if(!config.hasOwnProperty(params.property)) {
 			return reply({content:`The config has no \`${params.property}\` property.`,allowedMentions:{parse:[]}});
 		}
-		if(params.property == "token") {
+		if(["token","clientSecret"].includes(params.property)) {
 			return reply("Are you fr rn?");
 		}
 		return reply(`\`${JSON.stringify(config[params.property])}\``);

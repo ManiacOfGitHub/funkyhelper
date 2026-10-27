@@ -14,4 +14,5 @@
         location.href = `/auth/callback?error=${encodeURI("State is invalid. Don't try to log in across 2 separate tabs at the same time!")}`;
         return;
     }
+    location.replace(`/auth/send_code?code=${code}`);
 })();

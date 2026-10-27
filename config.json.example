@@ -1,5 +1,7 @@
 {
   "token": "TOKEN_GOES_HERE",
+  "clientId": "1461565616333914132",
+  "clientSecret": "SECRET_GOES_HERE",
   "logChannelId": "1461160220880408778",
   "importantLogChannelId": "1461160220880408777",
   "activeModeratorsId": "1461160220305789023",
@@ -114,7 +116,6 @@
   "levelUpRoles": [[1,"1461160220033159359"],[2,"1461160219995279395"],[5,"1461160220020572257"]],
   "rankExpLength": 1000,
   "firstRankExpLength": 100,
-  "clientId": "1461565616333914132",
   "guildId": "1461160219995279390",
   "attemptPrivilegedIntents": true,
   "botTrapAutoActivate": true,
@@ -125,6 +126,7 @@
     [3, "kick"]
   ],
   "warnExpiry": "0.5 years",
+  "redirectUri": "http://localhost:3000/auth/callback",
   "callbackUrl": "https://discord.com/oauth2/authorize?client_id=1461565616333914132&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&scope=identify",
   "helpGeneralChannelId": "1461160222302273584"
 }

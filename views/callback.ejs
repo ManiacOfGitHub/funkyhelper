@@ -12,10 +12,12 @@
             <h1 class="fs-1 text-center">Staff Login</h1>
             <hr>
             <% if (!locals.error) { %>
-            <div class="alert alert-secondary">Nothing here for now! Come back again later.</div>
+            <div class="alert alert-primary">Logging you in...</div>
             <script src="/loginCheck.js"></script>
             <% } else { %>
-            <div class="alert alert-danger">An error has occurred:<br><%= error %></div>
+            <h5>An error has occurred:</h5>
+            <div class="alert alert-danger"><%= locals.error || "An error has occurred." %></div>
+            <p>Please try again later.</p>
             <% } %>
         </div>
     </body>
