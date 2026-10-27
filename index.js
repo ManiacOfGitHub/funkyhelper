@@ -5,6 +5,8 @@ const { exec } = require('child_process');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const util = require('./util');
 const web = require('./web');
+var undici = require("undici");
+undici.install();
 
 var config = require('./config.json');
 const { log } = require('console');
