@@ -20,8 +20,8 @@ module.exports = (client, logChannels, config, botContext) => {
 	    if(args[0] != `<@${client.user.id}>`) {
             return;
         }
-        args = args.slice(1); 
-        if(!args[0].startsWith(".")) return;
+        args = args.slice(1);
+        if(!args.length || !args[0].startsWith(".")) return;
         let commandName = args[0].slice(1).toLowerCase();
         var result = getCmdNodeIdFromName.get(commandName);
         if(!result) return;
